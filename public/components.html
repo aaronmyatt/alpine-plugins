@@ -1,0 +1,23 @@
+<h1> Alpine Components </h1>
+
+<h2>Inline Template Components</h2>
+<test-component x-ref="testComponent">
+  <h5 data-test="test-component-slot"> Some shiny new slot </h5>
+  <h5 slot="can-alpine" data-test="test-component-slot"> Named Slot </h5>
+</test-component>
+
+<test-component x-data="DataMagic">
+  <h5 x-bind="clicky">Yap</h5>
+  <h5 x-ref="slotter" slot="can-alpine">Named Slot</h5>
+</test-component>
+
+<button @click="$refs.testComponent.title = 'Text From Button'">
+  Change Title
+</button>
+
+<hr />
+
+<h2>Remote Template Components</h2>
+<test-remote-component>
+  <div><i>Even preserving slots!</i></div>
+</test-remote-component>
