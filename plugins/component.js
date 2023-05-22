@@ -45,14 +45,12 @@ export default function registerWebComponents(Alpine) {
                 
                 // Define getters and setters for each property
                 Object.keys(properties).forEach((propertyName) => {
-                    this.setAttribute(propertyName, properties[propertyName]);
-
                     Object.defineProperty(this, propertyName, {
                         get() {
                             return this.shadowRoot.firstChild._x_dataStack[0][propertyName]
                         },
                         set(value) {
-                            this.shadowRoot.firstChild._x_dataStack[0][propertyName] = value;
+                            this.shadowRoot && (this.shadowRoot.firstChild._x_dataStack[0][propertyName] = value);
                         },
                     });
                 });
@@ -70,13 +68,20 @@ export default function registerWebComponents(Alpine) {
                 style.textContent = `@import url(${document.styleSheets[0].href})`
 
                 this.shadowRoot.appendChild(style);
+
                 Alpine.initTree(this.shadowRoot.firstChild);
 
-                let slots = this.shadowRoot.querySelectorAll("slot").forEach((slot) => {
-                    slot.addEventListener("slotchange", (e) => {
-                        // console.log(slot.assignedElements());
-                    });
-                })
+                Object.keys(properties).forEach((propertyName) => {
+                    if(this.hasAttribute(propertyName)) {
+                        this[propertyName] = this.getAttribute(propertyName);
+                    }
+                });
+
+                // let slots = this.querySelectorAll("slot").forEach((slot) => {
+                //     slot.addEventListener("slotchange", (e) => {
+                //         // console.log(slot.assignedElements());
+                //     });
+                // })
             }
 
             static get observedAttributes() {
@@ -111,13 +116,6 @@ export default function registerWebComponents(Alpine) {
                             return template.content.cloneNode(true);
                         });
                 }
-
-
-
-                
-                
-                
-
             }
         }
 
