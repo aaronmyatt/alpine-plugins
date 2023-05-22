@@ -15,7 +15,7 @@
     </li>
   </ul>
   <h2>x-route + x-view</h2>
-  <ul>
+  <ul x-data="{dynamicParam: 2}">
     <li>
       <p>We can just use interpolation...
       <pre>:href="`/test/${some}`"</pre>
@@ -36,7 +36,7 @@
     </li>
 
     <li>
-      <a data-test="param-route-middle-end" x-route="/view/product:aaron/static/category:2">Load template from route
+      <a  data-test="param-route-middle-end" :x-route="`/view/product:aaron/static/category:${dynamicParam}`">Load template from route
         /1/2/3/4 deep</a>
     </li>
 
