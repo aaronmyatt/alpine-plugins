@@ -110,8 +110,8 @@ describe('x-route', () => {
 describe('x-route & x-view', () => {
     beforeEach(() => {
         // visit BASE_PATH and wait for fetch to /router.html to complete
-        cy.visit(BASE_PATH)
         cy.intercept('/router.html').as('getView')
+        cy.visit(BASE_PATH)
         cy.wait('@getView')
     })
 
