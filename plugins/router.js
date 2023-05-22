@@ -112,7 +112,9 @@ export default function (Alpine) {
                             el.innerHTML = html
                         })
                         .then(() => {
-                            document.querySelector(target).innerHTML = el.innerHTML
+                            const targetEl = document.querySelector(target)
+                            targetEl.innerHTML = el.innerHTML
+                            Alpine.initTree(targetEl);
                         })
                 } else {
                     document.querySelector(target).innerHTML = el.innerHTML
