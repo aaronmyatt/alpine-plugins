@@ -51,14 +51,11 @@ export default function (Alpine) {
     Alpine.router = Router;
     Alpine.views = Views;
 
-    Alpine.directive('route', (el, { expression }, { effect }) => {
-        el.getAttribute('href') || el.setAttribute('href', '')
-
+    Alpine.directive('route', (el, { expression }, { evaluate, effect }) => {
         el.addEventListener('click', (event) => {
             target = el.getAttribute('x-target') || Alpine.defaultTarget
-
             if (linkIsInternal(expression)) {
-                event.preventDefault()
+                event && event.preventDefault()
                 Router._rawPath = expression
                 // separate path from query
                 const [path, query] = expression.split('?')
@@ -78,6 +75,29 @@ export default function (Alpine) {
                 Router.push(realPath, query && getQueryParams(`?${query}`))
             }
         })
+    })
+
+    Alpine.magic('route', (el, {Alpine}) => expression => {
+        target = el.getAttribute('x-target') || Alpine.defaultTarget
+            if (linkIsInternal(expression)) {
+                Router._rawPath = expression
+                // separate path from query
+                const [path, query] = expression.split('?')
+                const realPath = path
+                    .split('/')
+                    .filter((key) => key !== '')
+                    .reduce((pathToBe, pathPart) => {
+                        // extract key from key if key is "key:value"
+                        if (pathPart.includes(':')) {
+                            const [paramKey, paramValue] = pathPart.split(':')
+                            Router.params[paramKey] = paramValue
+                            return pathToBe + paramValue + '/'
+                        } else {
+                            return pathToBe + pathPart + '/'
+                        }
+                    }, '/')
+                Router.push(realPath, query && getQueryParams(`?${query}`))
+            }
     })
 
     Alpine.directive('view', (el, { expression }, { effect }) => {
