@@ -65,6 +65,11 @@ export default function registerWebComponents(Alpine) {
                 
                 this.attachShadow({ mode: 'open' });
                 this.shadowRoot.appendChild(this.alpineWrapper);
+
+                const style = document.createElement("style");
+                style.textContent = `@import url(${document.styleSheets[0].href})`
+
+                this.shadowRoot.appendChild(style);
                 Alpine.initTree(this.shadowRoot.firstChild);
 
                 let slots = this.shadowRoot.querySelectorAll("slot").forEach((slot) => {
