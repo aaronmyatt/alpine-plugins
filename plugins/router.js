@@ -31,8 +31,8 @@ export default function (Alpine) {
          * // => Alpine.router.query = {key: 'value'}
          **/
         push(path, query) {
-            // remove trailing slash from path
-            path = path.replace(/\/$/, '')
+            // remove trailing slash from path unless it's just a slash
+            path = path === '/' ? path : path.replace(/\/$/, '')
             if (query) {
                 const queryString = objectToQueryString(query)
                 window.history.pushState({}, '', `${path}${queryString}`)
@@ -43,6 +43,7 @@ export default function (Alpine) {
             this.queryRaw = window.location.search
             this.path = window.location.pathname
             this.origin = window.location.origin
+            return this;
         },
         params: {},
         _rawPath: '', // <-- internal property, retains params
@@ -51,30 +52,37 @@ export default function (Alpine) {
     Alpine.router = Router;
     Alpine.views = Views;
 
-    Alpine.directive('route', (el, { expression }, { evaluate, effect }) => {
-        el.addEventListener('click', (event) => {
-            target = el.getAttribute('x-target') || Alpine.defaultTarget
-            if (linkIsInternal(expression)) {
-                event && event.preventDefault()
-                Router._rawPath = expression
-                // separate path from query
-                const [path, query] = expression.split('?')
-                const realPath = path
-                    .split('/')
-                    .filter((key) => key !== '')
-                    .reduce((pathToBe, pathPart) => {
-                        // extract key from key if key is "key:value"
-                        if (pathPart.includes(':')) {
-                            const [paramKey, paramValue] = pathPart.split(':')
-                            Router.params[paramKey] = paramValue
-                            return pathToBe + paramValue + '/'
-                        } else {
-                            return pathToBe + pathPart + '/'
-                        }
-                    }, '/')
-                Router.push(realPath, query && getQueryParams(`?${query}`))
-            }
+    Alpine.directive('route', (el, { expression }, { evaluateLater, effect }) => {
+
+        const getRoute = expression.startsWith('/') ? (fn) => fn(expression) : evaluateLater(expression);
+        effect(() => {
+            getRoute((route) => {
+                el.addEventListener('click', (event) => {
+                    target = el.getAttribute('x-target') || Alpine.defaultTarget
+                    if (linkIsInternal(route)) {
+                        event && event.preventDefault()
+                        Router._rawPath = route
+                        // separate path from query
+                        const [path, query] = route.split('?')
+                        const realPath = path
+                            .split('/')
+                            .filter((key) => key !== '')
+                            .reduce((pathToBe, pathPart) => {
+                                // extract key from key if key is "key:value"
+                                if (pathPart.includes(':')) {
+                                    const [paramKey, paramValue] = pathPart.split(':')
+                                    Router.params[paramKey] = paramValue
+                                    return pathToBe + paramValue + '/'
+                                } else {
+                                    return pathToBe + pathPart + '/'
+                                }
+                            }, '/')
+                        Router.push(realPath, query && getQueryParams(`?${query}`))
+                    }
+                })  
+            })
         })
+
     })
 
     Alpine.magic('route', (el, {Alpine}) => expression => {
@@ -105,8 +113,7 @@ export default function (Alpine) {
         effect(() => {
             if (el.hasAttribute('x-target'))
                 target = el.getAttribute('x-target')
-
-
+            
             let view = Router._rawPath
                 .split('/')
                 .filter((key) => key !== '')
