@@ -47,10 +47,10 @@ export default function registerWebComponents(Alpine) {
                 Object.keys(properties).forEach((propertyName) => {
                     Object.defineProperty(this, propertyName, {
                         get() {
-                            return this.shadowRoot.firstChild._x_dataStack[0][propertyName]
+                            return Alpine.$data(this.shadowRoot)[propertyName]
                         },
                         set(value) {
-                            this.shadowRoot && (this.shadowRoot.firstChild._x_dataStack[0][propertyName] = value);
+                            this.shadowRoot && (Alpine.$data(this.shadowRoot.firstChild)[propertyName] = value);
                         },
                     });
                 });
