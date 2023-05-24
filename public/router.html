@@ -1,72 +1,65 @@
-<h1> Alpine Router </h1>
-<div>
-  <h2>x-route</h2>
+<section class="container">
+  <h1> Alpine Router </h1>
+  <div>
+    <h2>x-route</h2>
 
-  <div id="app"></div>
+    <ul>
+      <li>
+        <a data-test="basic-route" x-route="/test">
+          Test Basic
+        </a>
+      </li>
+      <li>
+        <a data-test="basic-absolute-route" :href="location.origin">Test Absolute</a>
+      </li>
+    </ul>
+    <h2>x-route + x-view</h2>
+    <nav class="navbar" x-data="{dynamicParam: 2}">
+        <a class="btn btn-sm" x-data="{some:'value'}" data-test="route-one-param" x-target="router-container" :href="`/test/${some}`">Test One Param</a>
+        <a class="btn btn-sm" data-test="route-to-view" x-target="#router-container" x-route="/router/view">Load template into "main" element </a>
+        <a class="btn btn-sm" data-test="param-route" x-target="#router-container" x-route="/router/view/name:aaron">Load template from param route</a>
+        <a class="btn btn-sm" data-test="param-route-middle" x-target="#router-container" x-route="/router/view/product:aaron/static">Load template from route /1/2/3 deep</a>
+        <a class="btn btn-sm"  data-test="param-route-middle-end" x-target="#router-container" :x-route="`/router/view/product:aaron/static/category:${dynamicParam}`">Load template from route
+          /1/2/3/4 deep</a>
+        <a class="btn btn-sm" data-test="targetted-route" x-route="/router/view" x-target="#app">Into targeted element id="app"</a>
+        <a class="btn btn-sm" data-test="remote-route" x-route="/router/remote" x-target="#app">View content from backend</a>
+    </nav>
+  </div>
 
-  <ul>
-    <li>
-      <a data-test="basic-route" x-route="/test">
-        Test Basic
-      </a>
-    </li>
-    <li>
-      <a data-test="basic-absolute-route" :href="location.origin">Test Absolute</a>
-    </li>
-  </ul>
-  <h2>x-route + x-view</h2>
-  <ul x-data="{dynamicParam: 2}">
-    <li>
-      <p>We can just use interpolation...
-      <pre>:href="`/test/${some}`"</pre>
-      </p>
-      <p> this requires all of our routes to be unique - is that a problem?</p>
-      <a x-data="{some:'value'}" data-test="route-one-param" :href="`/test/${some}`">Test One Param</a>
-    </li>
-    <li>
-      <a data-test="route-to-view" x-route="/view">Load template into "main" element </a>
-    </li>
+  <div class="m-12 p-12">
+    <indicate-element>
+      <section class="m-4" id="router-container">
+      </section>
+    </indicate-element>
+  </div>
 
-    <li>
-      <a data-test="param-route" x-route="/view/name:aaron">Load template from param route</a>
-    </li>
+  <div class="m-12 p-12">
+    <indicate-element>
+      <section class="m-4" id="app">
+      </section>
+    </indicate-element>
+  </div>
 
-    <li>
-      <a data-test="param-route-middle" x-route="/view/product:aaron/static">Load template from route /1/2/3 deep</a>
-    </li>
-
-    <li>
-      <a  data-test="param-route-middle-end" :x-route="`/view/product:aaron/static/category:${dynamicParam}`">Load template from route
-        /1/2/3/4 deep</a>
-    </li>
-
-    <li>
-      <a data-test="targetted-route" x-route="/view" x-target="#app">Into targeted element id="app"</a>
-    </li>
-
-    <li>
-      <a data-test="remote-route" x-route="/remote" x-target="#app">View content from backend</a>
-    </li>
-  </ul>
-</div>
+  
 
 
-<template x-view="/view">
-  <h2 data-test="test-view"> Some shiny new content </h2>
-</template>
+  <template x-view="/router/view">
+    <h2 data-test="test-view"> Some shiny new content </h2>
+  </template>
 
-<template x-view="/view/name">
-  <h2 data-test="test-view-params"> Some parameterised content </h2>
-</template>
+  <template x-view="/router/view/name">
+    <h2 data-test="test-view-params"> Some parameterised content </h2>
+  </template>
 
-<template x-view="/view/product/static">
-  <h2 data-test="test-view-params-middle"> Param in the middle </h2>
-  <h3>Params</h3>
-  <pre x-text="JSON.stringify(Alpine.router)"></pre>
-</template>
+  <template x-view="/router/view/product/static">
+    <h2 data-test="test-view-params-middle"> Param in the middle </h2>
+    <h3>Params</h3>
+    <pre x-text="JSON.stringify(Alpine.router)"></pre>
+  </template>
 
-<template x-view="/view/product/static/category">
-  <h2 data-test="test-view-params-middle-end"> Param in the middle and end </h2>
-</template>
+  <template x-view="/router/view/product/static/category">
+    <h2 data-test="test-view-params-middle-end"> Param in the middle and end </h2>
+  </template>
 
-<template x-view="/remote"></template>
+  <template x-view="/router/remote"></template>
+</section>
