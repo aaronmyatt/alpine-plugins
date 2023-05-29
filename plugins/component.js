@@ -1,20 +1,22 @@
 // Define a new Alpine.js plugin
 export default function registerWebComponents(Alpine) {
+    window.components = window.components || [];
     const ALPINE_ATTRIBUTE_PREFIX = 'x-';
-    // Find all <template> tags with the `x-component` directive
-    document.querySelectorAll('template[x-component]').forEach((template) => {
+
+    Alpine.directive('component', (el, { expression }, { effect }) => {
+        if (customElements.get(expression)) return;
         // Get the component name from the `x-component` directive
-        const componentName = template.getAttribute('x-component');
+        const componentName = expression;
 
         // Get the property names and default values from the <template> tag
-        const properties = Object.assign({}, template.dataset);
-        const alpineDirectives = template.getAttributeNames()
+        const properties = Object.assign({}, el.dataset);
+        const alpineDirectives = el.getAttributeNames()
             .filter((attributeName) => {
                 return attributeName.startsWith(ALPINE_ATTRIBUTE_PREFIX) && attributeName !== "x-component";
             })
             .map((attributeName) => {
                 return {
-                    [attributeName]: template.getAttribute(attributeName)
+                    [attributeName]: el.getAttribute(attributeName)
                 }
             })
             .reduce((acc, curr) => {
@@ -54,7 +56,6 @@ export default function registerWebComponents(Alpine) {
                 Object.keys(alpineDirectives).forEach((directive) => {
                     this.alpineWrapper.setAttribute(directive, alpineDirectives[directive]);
                 });
-
                 // Define getters and setters for each property
                 Object.keys(properties).forEach((propertyName) => {
                     Object.defineProperty(this, propertyName, {
@@ -69,15 +70,15 @@ export default function registerWebComponents(Alpine) {
             }
 
             async connectedCallback() {
+                window.components.push(this);
                 this.attachShadow({ mode: 'open' });
                 // Get the contents of the <template> tag and attach it to the shadow DOM
                 const componentTemplate = await this.cloneOrFetchTemplate();
                 this.alpineWrapper.appendChild(componentTemplate);
                 this.shadowRoot.appendChild(this.alpineWrapper);
+                this.addStylesIfPresent(componentTemplate);
                 this.shareStylesWithDocument();
-
                 Alpine.initTree(this.shadowRoot.firstChild);
-
                 this.registerProps()
                 this.registerSlots()
             }
@@ -93,8 +94,8 @@ export default function registerWebComponents(Alpine) {
             async cloneOrFetchTemplate() {
                 // check if template has non Slot element children
                 let hasNonSlotChildren = false;
-                for (let i = 0; i < template.content.children.length; i++) {
-                    if (template.content.children[i].tagName !== "SLOT") {
+                for (let i = 0; i < el.content.children.length; i++) {
+                    if (el.content.children[i].tagName !== "SLOT") {
                         hasNonSlotChildren = true;
                         break;
                     }
@@ -103,15 +104,15 @@ export default function registerWebComponents(Alpine) {
                 // if template has non Slot element children, clone it
                 // otherwise fetch it from the public folder
                 if (hasNonSlotChildren) {
-                    return template.content.cloneNode(true);
+                    return el.content.cloneNode(true);
                 } else {
                     return fetch(`${componentName}.html`)
                         .then((response) => response.text())
                         .then((html) => {
-                            template.innerHTML = `${html}${template.innerHTML}`;
+                            el.innerHTML = `${html}${el.innerHTML}`;
                         })
                         .then(() => {
-                            return template.content.cloneNode(true);
+                            return el.content.cloneNode(true);
                         });
                 }
             }
@@ -120,6 +121,12 @@ export default function registerWebComponents(Alpine) {
                 const style = document.createElement("style");
                 style.textContent = `@import url(${document.styleSheets[0].href})`
                 this.shadowRoot.appendChild(style);
+            }
+
+            addStylesIfPresent(componentTemplate) {
+                componentTemplate.querySelectorAll("style").forEach((style) => {
+                    this.shadowRoot.appendChild(style);
+                })
             }
 
             registerProps() {

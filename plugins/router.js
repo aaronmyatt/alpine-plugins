@@ -3,33 +3,13 @@ export default function (Alpine) {
     let target = Alpine.defaultTarget
     const Views = Alpine.reactive({})
 
-    /**
-     * @typedef {object} Router
-     * @property {object} query
-     * @property {string} queryRaw
-     * @property {string} path
-     * @property {string} origin
-     * @property {function} push
-     * @property {object} params
-     * @property {string} _rawPath
-     * @private
-     **/
     const Router = Alpine.reactive({
+        routes: [],
         query: queryParamsToObject(window.location.search),
         queryRaw: window.location.search,
         path: window.location.pathname,
         origin: window.location.origin,
 
-        /**
-         * @param {string} path
-         * @param {object} query
-         * @example
-         * router.push('/somepath', {key: 'value'})
-         * // => window.location.pathname = '/somepath'
-         * // => window.location.search = '?key=value'
-         * // => Alpine.router.path = '/somepath'
-         * // => Alpine.router.query = {key: 'value'}
-         **/
         push(path, query) {
             // remove trailing slash from path unless it's just a slash
             path = path === '/' ? path : path.replace(/\/$/, '')
@@ -53,11 +33,13 @@ export default function (Alpine) {
     Alpine.views = Views;
 
     Alpine.directive('route', (el, { expression }, { evaluateLater, effect }) => {
+        Router.routes.push(el);
 
         const getRoute = expression.startsWith('/') ? (fn) => fn(expression) : evaluateLater(expression);
         effect(() => {
             getRoute((route) => {
                 el.addEventListener('click', (event) => {
+
                     target = el.getAttribute('x-target') || Alpine.defaultTarget
                     if (linkIsInternal(route)) {
                         event && event.preventDefault()
@@ -79,7 +61,7 @@ export default function (Alpine) {
                             }, '/')
                         Router.push(realPath, query && getQueryParams(`?${query}`))
                     }
-                })  
+                })
             })
         })
 
@@ -113,7 +95,7 @@ export default function (Alpine) {
         effect(() => {
             if (el.hasAttribute('x-target'))
                 target = el.getAttribute('x-target')
-            
+
             let view = Router._rawPath
                 .split('/')
                 .filter((key) => key !== '')
@@ -129,25 +111,38 @@ export default function (Alpine) {
                     return pathToBe + pathPart + '/'
                 }, '/')
 
-
             if (view === expression) {
                 // if element innerHTML empty, fetch template from public folder
-                if (el.innerHTML === '') {
-                    fetch(`${view}.html`)
+                if (el.innerHTML.trim() === '') {
+                    fetch(`${expression}.html`)
                         .then((response) => response.text())
                         .then((html) => {
                             el.innerHTML = html
                         })
                         .then(() => {
-                            const targetEl = document.querySelector(target)
-                            targetEl.innerHTML = el.innerHTML
-                            Alpine.initTree(targetEl);
+                            renderView(target, el.innerHTML);
                         })
                 } else {
-                    document.querySelector(target).innerHTML = el.innerHTML
+                    renderView(target, el.innerHTML);
                 }
             }
         })
+
+        function renderView(target, html){
+            const notInTheShadowDom = document.querySelector(target)
+            if(notInTheShadowDom){
+                notInTheShadowDom.innerHTML = html;
+                Alpine.initTree(notInTheShadowDom);
+            }
+            else
+                window.components && window.components.map(component => {
+                    const el = component.shadowRoot.querySelector(target)
+                    if(el){
+                        component.shadowRoot.querySelector(target).innerHTML = html
+                        Alpine.initTree(el);
+                    }
+                })
+        }
 
         // split route into object keys
         // if route is /foo/bar/baz
@@ -161,18 +156,7 @@ export default function (Alpine) {
         // }
         const keys = expression.split('/')
             .filter((key) => key !== '')
-        let current = Views
-        keys
-            .forEach((key, index) => {
-                if (index === keys.length - 1) {
-                    current[key] = el
-                } else {
-                    if (!current[key]) {
-                        current[key] = {}
-                    }
-                    current = current[key]
-                }
-            })
+        Views[expression] = el;
     })
 
     // ensure all views have been parsed then trigger initial view

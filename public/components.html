@@ -21,3 +21,14 @@
 <test-remote-component>
   <div><i>Even preserving slots!</i></div>
 </test-remote-component>
+
+<template x-component="test-component" data-title="Text From Attributes" x-bind="SomeMagic">
+  <h3 x-text="title"></h2>
+    <h4 data-test="test-component"> Some shiny new content </h3>
+  <slot></slot>
+  <slot @slotchange="() => console.log('wat')" name="can-alpine"></slot>
+</template>
+
+<template x-component="test-remote-component" data-title="Remote Component" x-bind="SomeMagic">
+  <slot></slot>
+</template>

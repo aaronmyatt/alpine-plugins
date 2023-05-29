@@ -1,65 +1,146 @@
-<section class="container">
-  <h1> Alpine Router </h1>
-  <div>
-    <h2>x-route</h2>
-
-    <ul>
-      <li>
-        <a data-test="basic-route" x-route="/test">
-          Test Basic
-        </a>
-      </li>
-      <li>
-        <a data-test="basic-absolute-route" :href="location.origin">Test Absolute</a>
-      </li>
-    </ul>
-    <h2>x-route + x-view</h2>
-    <nav class="navbar" x-data="{dynamicParam: 2}">
-        <a class="btn btn-sm" x-data="{some:'value'}" data-test="route-one-param" x-target="router-container" :href="`/test/${some}`">Test One Param</a>
-        <a class="btn btn-sm" data-test="route-to-view" x-target="#router-container" x-route="/router/view">Load template into "main" element </a>
-        <a class="btn btn-sm" data-test="param-route" x-target="#router-container" x-route="/router/view/name:aaron">Load template from param route</a>
-        <a class="btn btn-sm" data-test="param-route-middle" x-target="#router-container" x-route="/router/view/product:aaron/static">Load template from route /1/2/3 deep</a>
-        <a class="btn btn-sm"  data-test="param-route-middle-end" x-target="#router-container" :x-route="`/router/view/product:aaron/static/category:${dynamicParam}`">Load template from route
-          /1/2/3/4 deep</a>
-        <a class="btn btn-sm" data-test="targetted-route" x-route="/router/view" x-target="#app">Into targeted element id="app"</a>
-        <a class="btn btn-sm" data-test="remote-route" x-route="/router/remote" x-target="#app">View content from backend</a>
-    </nav>
-  </div>
-
-  <div class="m-12 p-12">
-    <indicate-element>
-      <section class="m-4" id="router-container">
-      </section>
-    </indicate-element>
-  </div>
-
-  <div class="m-12 p-12">
-    <indicate-element>
-      <section class="m-4" id="app">
-      </section>
-    </indicate-element>
-  </div>
-
-  
-
-
-  <template x-view="/router/view">
-    <h2 data-test="test-view"> Some shiny new content </h2>
-  </template>
-
-  <template x-view="/router/view/name">
-    <h2 data-test="test-view-params"> Some parameterised content </h2>
-  </template>
-
-  <template x-view="/router/view/product/static">
-    <h2 data-test="test-view-params-middle"> Param in the middle </h2>
-    <h3>Params</h3>
-    <pre x-text="JSON.stringify(Alpine.router)"></pre>
-  </template>
-
-  <template x-view="/router/view/product/static/category">
-    <h2 data-test="test-view-params-middle-end"> Param in the middle and end </h2>
-  </template>
-
-  <template x-view="/router/remote"></template>
+<section class="container p-2">
+    <div class="mx-auto max-w-lg rounded-xl p-2 prose bg-secondary">
+        <h1 class=""> Alpine Router </h1>
+        <p class="text-center">Use the <code>x-route</code> directive to pull content from
+            <code>&lt;template x-view=""&gt;&lt;/template&gt;</code> elements.</p>
+    </div>
 </section>
+<section class="container p-2">
+
+    <router-examples index="1" route="/router/view" label="Load local template"
+                     :template="$refs['/router/view'].outerHTML.trim()"></router-examples>
+    <router-examples index="2" route="/router/view/name:aaron" label="Include parameters in your routes"
+                     :template="$refs['/router/view/name'].outerHTML.trim()"></router-examples>
+    <router-examples index="3" route="/router/view/product:alpine/static" label="More params"
+                   :template="$refs['/router/view/product/static'].outerHTML.trim()"></router-examples>
+    <div x-data="{dynamicParam: 2}">
+      <router-examples index="4" :route="`/router/view/product:cheese/static/category:${dynamicParam}`" label="More.. more params!"
+                   :template="$refs['/router/view/product/static/category'].outerHTML.trim()"></router-examples>
+    </div>
+    <router-examples index="5" route="/router/view" label="Choose where your views go"
+                   :template="$refs['/router/view'].outerHTML.trim()"
+                   target="#app"
+    ></router-examples>
+    <div>
+      <indicate-element>
+        <section class="rounded-xl p-8 bg-secondary" id="app">
+          <img src="/holdon-toyourbutts.gif">
+        </section>
+      </indicate-element>
+    </div>
+    <router-examples index="6" route="/router/remote" label="View HTML can be pulled from anywhere"></router-examples>
+
+    <p>You can still use regular links</p>
+    <a data-test="basic-absolute-route" :href="location.origin">Test Absolute</a>
+    <hr>
+    <a  href="/router/view">View?</a>
+</section>
+
+
+
+    <template x-component="router-examples" data-index data-route data-label data-template data-target
+              x-data="{
+        target: '',
+        toggletemplate: false,
+        exampleLoaded: false,
+        template: '',
+        index: 0,
+        route: '',
+        label: '',
+      }"
+    >
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
+        <div class="prose mt-5">
+<pre class="mockup-code mt-2" x-show="!!template">
+  <code x-text="template"></code>
+</pre>
+            <div class="flex w-full flex-col border-opacity-50">
+                <div class="divider" x-cloak>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="h-6 w-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
+                    </svg>
+                </div>
+            </div>
+            <indicate-element>
+                <section
+                        x-transition :id="`example-${index}`"
+                        class="w-full rounded-xl p-8 bg-secondary text-center">
+                    <a @click="toggletemplate = true" class="btn btn-outline"
+                       :x-target="target || `#example-${index}`" x-route="route">
+                        Click here to load this view 👆
+                    </a>
+                </section>
+            </indicate-element>
+        </div>
+    </template>
+
+    <template x-component="indicate-element">
+        <div class="indicator w-full">
+      <span class="indicator-item indicator-end badge badge-primary mr-20">
+        x-target="
+        <span x-text="slots.default.id"></span>
+        "
+      </span>
+            <slot></slot>
+        </div>
+    </template>
+
+<template x-view="/router/view"
+          x-ref="/router/view">
+    <h2 data-test="test-view">Load local template</h2>
+    <p data-test="test-view">
+        The x-route & x-view combo allows you to load content from a <code>&lt;template&gt;&lt;/template&gt;</code> element.
+        The example code <span class="sm:hidden">above</span><span class="hidden sm:inline">to the left</span> is a view template!
+    </p>
+</template>
+
+    <template x-view="/router/view/name"
+              x-ref="/router/view/name">
+
+        <p data-test="test-view-params">
+          Some parameterised content
+        </p>
+    </template>
+
+    <template
+            x-view="/router/view/product/static"
+            x-ref="/router/view/product/static"
+    >
+        <h2 data-test="test-view-params-middle">
+          <pre>/router/view/product:alpine/static</pre>
+        </h2>
+        <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+            <input type="checkbox" />
+            <div class="collapse-title text-xl font-medium">
+                See the params
+            </div>
+            <div class="collapse-content">
+                <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
+            </div>
+        </div>
+    </template>
+
+    <template
+            x-view="/router/view/product/static/category"
+            x-ref="/router/view/product/static/category"
+    >
+        <h2 data-test="test-view-params-middle-end">
+            <pre>/router/view/product:alpine/static/category:2</pre>
+        </h2>
+        <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+            <input type="checkbox" />
+            <div class="collapse-title text-xl font-medium">
+                See the params
+            </div>
+            <div class="collapse-content">
+                <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
+            </div>
+        </div>
+    </template>
+
+    <template x-view="/router/remote"
+              x-ref="/router/remote"></template>
+
