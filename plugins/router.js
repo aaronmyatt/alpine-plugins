@@ -51,7 +51,7 @@ export default function (Alpine) {
     Alpine.router = Router;
     Alpine.views = Views;
 
-    Alpine.directive('route', (el, {expression, modifiers}, {evaluateLater, effect}) => {
+    Alpine.directive('route', (el, {expression}, {evaluateLater}) => {
         Router.routes.push(el);
 
         const getRoute = expression.startsWith('/') ? (fn) => fn(expression) : evaluateLater(expression);
@@ -73,7 +73,7 @@ export default function (Alpine) {
         }
     })
 
-    Alpine.directive('view', (el, {expression, modifiers}, {effect}) => {
+    Alpine.directive('view', (el, {expression}) => {
         Views[expression] = el;
         Views[expression].parts = expression.split('/').filter(part => part !== '');
     })
@@ -223,4 +223,8 @@ function getQueryParams(search) {
         return queryParamsToObject(search)
     }
     return null
+}
+
+function dropTrailingSlash(path) {
+    return path === '/' ? path : path.replace(/\/$/, '');
 }
