@@ -1,146 +1,180 @@
-<section class="container p-2">
-    <div class="mx-auto max-w-lg rounded-xl p-2 prose bg-secondary">
-        <h1 class=""> Alpine Router </h1>
-        <p class="text-center">Use the <code>x-route</code> directive to pull content from
-            <code>&lt;template x-view=""&gt;&lt;/template&gt;</code> elements.</p>
+<section class="container mx-auto p-2 prose" data-test="router-view">
+    <div class="mx-auto max-w-lg rounded-xl p-2 text-justify bg-secondary">
+        <h1> Alpine Router </h1>
+        <p>Alpine Router introduce <strong>two Alpine.js directives</strong> to provide <i>SPA navigation</i>,
+            organising your pages into <i>views/partials</i>
+            and loading them into the DOM based on your route changes.</p>
+
+        <h3><code>x-route</code></h3>
+        <p>Use the <i>x-route</i> directive to update the browsers <i>location.pathname</i> on click.
+            Alpine Router will also collect all route parameters and other essentials
+            and exposes them globally as <i>Alpine.router</i>
+        </p>
+
+        <h3><code>x-view</code></h3>
+        <p><i>x-view</i> directives when attached to <i>&lt;template&gt;&lt;/template&gt;</i> elements
+            and will be loaded into the DOM upon route are changes (via <i>x-route</i>).
+        </p>
+        <p> By default <i>x-view</i> will replace whatever HTML is inside of a
+            <i>&lt;main&gt;</i> element, but you can control this via an <i>x-target</i> attribute which can be
+            added to either elements with <i>x-view</i> or <i>x-route</i>. See the examples below.
+        </p>
     </div>
 </section>
-<section class="container p-2">
 
-    <router-examples index="1" route="/router/view" label="Load local template"
-                     :template="$refs['/router/view'].outerHTML.trim()"></router-examples>
-    <router-examples index="2" route="/router/view/name:aaron" label="Include parameters in your routes"
-                     :template="$refs['/router/view/name'].outerHTML.trim()"></router-examples>
-    <router-examples index="3" route="/router/view/product:alpine/static" label="More params"
-                   :template="$refs['/router/view/product/static'].outerHTML.trim()"></router-examples>
-    <div x-data="{dynamicParam: 2}">
-      <router-examples index="4" :route="`/router/view/product:cheese/static/category:${dynamicParam}`" label="More.. more params!"
-                   :template="$refs['/router/view/product/static/category'].outerHTML.trim()"></router-examples>
-    </div>
-    <router-examples index="5" route="/router/view" label="Choose where your views go"
-                   :template="$refs['/router/view'].outerHTML.trim()"
-                   target="#app"
-    ></router-examples>
-    <div>
-      <indicate-element>
-        <section class="rounded-xl p-8 bg-secondary" id="app">
-          <img src="/holdon-toyourbutts.gif">
-        </section>
-      </indicate-element>
-    </div>
-    <router-examples index="6" route="/router/remote" label="View HTML can be pulled from anywhere"></router-examples>
+<div class="container m-10 mx-5 mx-auto text-lg chat chat-start">
+    <p class="text-center chat-bubble chat-bubble-accent">Use the <i>x-route</i> directive to load content from
+    <i>&lt;template x-view=""&gt;</i> elements.</p>
+</div>
 
-    <p>You can still use regular links</p>
-    <a data-test="basic-absolute-route" :href="location.origin">Test Absolute</a>
-    <hr>
-    <a  href="/router/view">View?</a>
+<section class="container mx-auto p-2 prose"
+         x-data="{
+            example1: Alpine.views['/router/view']?.outerHTML.trim(),
+            example2: Alpine.views['/router/view/name']?.outerHTML.trim(),
+            example3: Alpine.views['/router/view/product/static']?.outerHTML.trim(),
+            example4: Alpine.views['/router/view/product/static/category']?.outerHTML.trim(),
+            dynamicParam: 2,
+         }"
+>
+    <h2>Examples</h2>
+
+    <router-examples index="1" route="/router/view"
+                     :template="example1"></router-examples>
+    <router-examples index="2" route="/router/view/name:aaron"
+                     :template="example2"></router-examples>
+    <router-examples index="3" route="/router/view/product:alpine/static"
+                   :template="example3"></router-examples>
+    <router-examples index="4" :route="`/router/view/product:cheese/static/category:${dynamicParam}`"
+                   :template="example4"></router-examples>
+
+    <div class="mx-auto mt-4 rounded-xl p-2 text-justify bg-secondary">
+        <h2>Remote Views</h2>
+        <p>A <i>&lt;template x-view=""&gt;</i> element is necessary to define an x-view, but the <i>&lt;template&gt;</i> itself can be empty!
+            If no content is found inside of the <i>&lt;template&gt;</i> Alpine Router will try to fetch an .html file from the path
+            specified in the x-view value. For instance, the following example is pulling view content from a file at
+            <i>/router/remote.html</i>
+        </p>
+    </div>
+    <router-examples index="5" route="/router/remote"></router-examples>
+
+    <div class="mx-auto mt-4 rounded-xl p-2 text-justify bg-secondary">
+        <h2>Child Routes and Views</h2>
+        <p>
+            Here's how this page is structured:
+        </p>
+        <pre class="text-left">
+/router
+├── /router/view
+├── /router/view/name
+├── /router/view/product
+├── /router/view/product/static
+├── /router/view/product/static/category
+├── /router/remote
+        </pre>
+        <p>
+            <i>x-view="/router"</i> is defined in the root index.html file.
+            The "child" views all sit inside of the <i>/router</i> <i>&lt;template x-view=""&gt;</i> element.
+            This is how you can nest views.
+        </p>
+        <p>
+            You will generally want to pair nested views with <i>x-target</i> to specify where the child view will
+            be loaded on the parent. Check the source for the <i>/router</i> view to see many examples!
+        </p>
+        <a href="/router.html"><code>/router.html</code></a>
+    </div>
+
+    <div class="mx-auto mt-4 rounded-xl p-2 text-justify bg-secondary">
+        <h2><code>&lt;a&gt; Tags</code></h2>
+        <p>Can be used normally! <i>x-route</i> and the Alpine router will ignore them, so use regular links for
+            absolute routes, navigating away from your site, or opening stuff in new tabs.
+        </p>
+        <a data-test="basic-absolute-route" :href="location.origin">Absolutely Redirect to the home page</a>
+    </div>
 </section>
 
-
-
-    <template x-component="router-examples" data-index data-route data-label data-template data-target
-              x-data="{
-        target: '',
-        toggletemplate: false,
-        exampleLoaded: false,
-        template: '',
-        index: 0,
-        route: '',
-        label: '',
-      }"
-    >
-        <style>
-            [x-cloak] { display: none !important; }
-        </style>
-        <div class="prose mt-5">
-<pre class="mockup-code mt-2" x-show="!!template">
-  <code x-text="template"></code>
-</pre>
-            <div class="flex w-full flex-col border-opacity-50">
-                <div class="divider" x-cloak>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="h-6 w-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
-                    </svg>
-                </div>
+<template x-component="router-examples"
+          data-index data-route data-label data-template data-target
+          x-data="{ target: '', template: '', index: 0, route: '', label: '' }"
+>
+    <div class="mt-5 prose">
+        <pre class="mt-2" x-show="!!template"><code x-text="template"></code></pre>
+        <div x-show="!!template" class="flex w-full flex-col border-opacity-50">
+            <div class="divider" x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
+                </svg>
             </div>
-            <indicate-element>
-                <section
-                        x-transition :id="`example-${index}`"
-                        class="w-full rounded-xl p-8 bg-secondary text-center">
-                    <a @click="toggletemplate = true" class="btn btn-outline"
-                       :x-target="target || `#example-${index}`" x-route="route">
-                        Click here to load this view 👆
-                    </a>
-                </section>
-            </indicate-element>
         </div>
-    </template>
+        <indicate-element>
+            <section :id="`example-${index}`" class="w-full rounded-xl p-8 text-center bg-secondary" x-effect="() => {
+                    if($el.innerHTML.trim() === ''){
+                        $el.innerHTML = '<default-content></default-content>'
+                    }
+                }">
+                <default-content :target="target" :index="index"></default-content>
+            </section>
+        </indicate-element>
+    </div>
 
-    <template x-component="indicate-element">
-        <div class="indicator w-full">
-      <span class="indicator-item indicator-end badge badge-primary mr-20">
-        x-target="
-        <span x-text="slots.default.id"></span>
-        "
-      </span>
-            <slot></slot>
-        </div>
+    <template x-component="default-content" data-target data-index>
+        <a class="btn btn-outline" :x-target="target || `#example-${index}`" x-route="route"> Click this <i class="pl-1"> x-route</i></a>
     </template>
+</template>
 
-<template x-view="/router/view"
-          x-ref="/router/view">
-    <h2 data-test="test-view">Load local template</h2>
+<template x-component="indicate-element">
+    <div class="w-full indicator">
+  <span class="mr-20 indicator-item indicator-end badge badge-primary">
+    x-target="
+    <span x-text="slots.default.id"></span>
+    "
+  </span>
+        <slot></slot>
+    </div>
+</template>
+
+<template x-view="/router/view" x-target="#example-1">
+    <h3 data-test="test-view">Load local &lt;templates&gt;</h3>
     <p data-test="test-view">
-        The x-route & x-view combo allows you to load content from a <code>&lt;template&gt;&lt;/template&gt;</code> element.
-        The example code <span class="sm:hidden">above</span><span class="hidden sm:inline">to the left</span> is a view template!
+        The <code>x-route=""</code> & <code>x-view=""</code> combo allows you to load content
+        from a <code>&lt;template&gt;&lt;/template&gt;</code> element.
+        The example code <span class="sm:hidden">above</span>
+        <span class="hidden sm:inline">to the left</span> is a view template!
     </p>
 </template>
 
-    <template x-view="/router/view/name"
-              x-ref="/router/view/name">
+<template x-view="/router/view/name" x-target="#example-2">
+    <h3>Route Parameters</h3>
+    <p data-test="test-view-params">
+        You can treat parts of your x-route as parameters.
+        Just follow the parameter name with a colon and the value.
+        The x-route you just clicked on looked like this:
+        <pre>x-route="/router/view/name:aaron"</pre>
+        You can use the <code>Alpine.router.params</code> object to access the parameters.
+        Check the browser URL for yourself!
+    </p>
+</template>
 
-        <p data-test="test-view-params">
-          Some parameterised content
-        </p>
-    </template>
+<template x-view="/router/view/product/static">
+    <h3 data-test="test-view-params-middle">
+        Check the params for yourself
+    </h3>
+    <pre class="text-left">/router/view/product:alpine/static
+JSON.stringify(Alpine.router.params, null, '  ')</pre>
+    <p>Becomes 👇</p>
+    <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
+</template>
 
-    <template
-            x-view="/router/view/product/static"
-            x-ref="/router/view/product/static"
-    >
-        <h2 data-test="test-view-params-middle">
-          <pre>/router/view/product:alpine/static</pre>
-        </h2>
-        <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-            <input type="checkbox" />
-            <div class="collapse-title text-xl font-medium">
-                See the params
-            </div>
-            <div class="collapse-content">
-                <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
-            </div>
-        </div>
-    </template>
+<template x-view="/router/view/product/static/category">
+    <h3 data-test="test-view-params-middle-end">
+        <pre>/router/view/product:alpine/static/category:2</pre>
+    </h3>
+    <p>Parameters can be quite flexible! Just leverage Javascript template string to use data from <i>x-data</i>. e.g.</p>
+    <pre>x-route="`/router/view/product:${productName}/static/category:${categoryId}`"</pre>
+    <div class="collapse-content">
+        <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
+    </div>
+</template>
 
-    <template
-            x-view="/router/view/product/static/category"
-            x-ref="/router/view/product/static/category"
-    >
-        <h2 data-test="test-view-params-middle-end">
-            <pre>/router/view/product:alpine/static/category:2</pre>
-        </h2>
-        <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-            <input type="checkbox" />
-            <div class="collapse-title text-xl font-medium">
-                See the params
-            </div>
-            <div class="collapse-content">
-                <pre class="text-left" x-text="JSON.stringify(Alpine.router.params, null, '  ')"></pre>
-            </div>
-        </div>
-    </template>
-
-    <template x-view="/router/remote"
-              x-ref="/router/remote"></template>
+<template x-view="/router/remote" x-target="#example-5"></template>
 
