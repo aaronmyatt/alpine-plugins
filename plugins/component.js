@@ -63,7 +63,7 @@ export default function registerWebComponents(Alpine) {
                             return Alpine.$data(this.shadowRoot.firstChild)[propertyName]
                         },
                         set(value) {
-                            this.shadowRoot && (Alpine.$data(this.shadowRoot.firstChild)[propertyName] = value);
+                            this.shadowRoot && this.shadowRoot.firstChild && (Alpine.$data(this.shadowRoot.firstChild)[propertyName] = value);
                         },
                     });
                 });
