@@ -42,6 +42,12 @@ export default function (Alpine) {
         _rawPath: '', // <-- internal property, retains params
     })
 
+    window.addEventListener('popstate', (e) => {
+        e.preventDefault();
+        target = Alpine.defaultTarget
+        renderView(Router.lastRoute.target, '');
+    })
+
     Alpine.router = Router;
     Alpine.views = Views;
 
