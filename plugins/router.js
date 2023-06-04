@@ -105,7 +105,34 @@ export default function (Alpine) {
     })
 
     // ensure all views have been parsed then trigger initial view
-    Router._rawPath = window.location.pathname
+    const pathname = dropTrailingSlash(window.location.pathname)
+    // 👆this may not match a template in the DOM, but it may match a child view in a remote template
+    // so we need to see if any of the parent templates in the current html file match a "part" of the
+    // pathname and load that view first - much like you would a layout in a traditional router
+
+    const mostLikelyBaseView = pathname.split('/')
+        .filter((key) => key !== '')
+        .map(part => {
+            const key = `/${part}`
+            return document.querySelector(`template[x-view="${key}"]`)
+        })
+        // keep the longest match
+        .reduce((longest, current) => {
+            if (current && current.getAttribute('x-view').length > longest.getAttribute('x-view').length)
+                return current
+            return longest
+        }, document.querySelector(`[x-view="/"]`))
+
+    document.addEventListener('alpine:init', () => {
+        if (mostLikelyBaseView) {
+            renderLocalOrRemoteView(mostLikelyBaseView, Alpine.defaultTarget)
+                .then(_ => {
+                    Router.push(pathname+window.location.search);
+                });
+        } else {
+            Router.push(pathname+window.location.search);
+        }
+    });
 }
 
 function objectToQueryString(obj) {
