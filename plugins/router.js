@@ -135,6 +135,71 @@ export default function (Alpine) {
     });
 }
 
+function renderLocalOrRemoteView(templateEl, target, initTree = true) {
+    if (templateEl.innerHTML.trim() === '') {
+        // get first attribute from templateEl that startsWith x-view
+        // otherwise "child" templates that rely on a modifier will be skipped
+        // const attrName = Array.from(templateEl.attributes).find(attr => attr.name.startsWith('x-view')).name;
+        const path = templateEl.getAttribute('x-view');
+        return fetch(`${path}.html`)
+            .then((response) => response.text())
+            .then((html) => {
+                templateEl.innerHTML = html
+            })
+            .then(() => {
+                renderView(target, templateEl.innerHTML, initTree);
+            })
+    } else {
+        return Promise.resolve(renderView(target, templateEl.innerHTML, initTree));
+    }
+}
+
+function renderView(target, html, initTree = true) {
+    const notInTheShadowDom = document.querySelector(target)
+    if (notInTheShadowDom) {
+        notInTheShadowDom.innerHTML = html;
+        initTree && Alpine.initTree(notInTheShadowDom);
+    } else
+        window.components && window.components.map(component => {
+            const el = component.shadowRoot.querySelector(target)
+            if (el) {
+                component.shadowRoot.querySelector(target).innerHTML = html
+                initTree && Alpine.initTree(el);
+            }
+        })
+}
+
+function paramsFromRoute(path) {
+    return path
+        .split('/')
+        .filter((key) => key !== '')
+        .reduce((paths, pathPart) => {
+            paths.parts.push(pathPart);
+            // extract key from key if key is "key:value"
+            if (pathPart.includes(':')) {
+                const [paramKey, paramValue] = pathPart.split(':')
+                paths.params[paramKey] = paramValue
+                return {
+                    pathname: paths['pathname'] + paramValue + '/',
+                    rawpath: paths['rawpath'] + paramKey + '/',
+                    params: paths['params'],
+                    parts: paths['parts'],
+                }
+            }
+            return {
+                pathname: paths['pathname'] + pathPart + '/',
+                rawpath: paths['rawpath'] + pathPart + '/',
+                params: paths['params'],
+                parts: paths['parts'],
+            }
+        }, {
+            pathname: '/',
+            rawpath: '/',
+            params: {},
+            parts: [],
+        })
+}
+
 function objectToQueryString(obj) {
     const params = new URLSearchParams(obj)
     return `?${params.toString()}`
