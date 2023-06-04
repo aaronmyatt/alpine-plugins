@@ -193,6 +193,14 @@ describe('x-view children', () => {
         cy.get('[data-test="test-view"]').should('not.exist')
     })
 
+    it('can go "back" to home page/root route', () => {
+        cy.visit(ROOT_PATH)
+        cy.get('[data-test="home-router-button"]').click()
+        cy.get('[data-test="home-router-button"]').should('not.exist')
+        cy.go('back')
+        cy.get('[data-test="home-router-button"]').should('exist')
+    })
+
 })
 
 describe('x-target', () => {

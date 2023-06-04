@@ -5,17 +5,17 @@ export default function (Alpine) {
 
     const Router = Alpine.reactive({
         routes: [],
+        parts: [],
         lastRoute: {},
         query: {},
+        params: {},
         queryRaw: '',
         path: '',
         origin: '',
-        params: {},
-        parts: [],
 
         push(slug) {
             // separate path from query
-            const [path, query] = slug.split('?')
+            const [path, query] = dropTrailingSlash(slug).split('?')
             const paths = paramsFromRoute(dropTrailingSlash(path))
             this.params = paths.params
             this.parts = paths.parts
@@ -43,9 +43,11 @@ export default function (Alpine) {
     })
 
     window.addEventListener('popstate', (e) => {
-        e.preventDefault();
         target = Alpine.defaultTarget
-        renderView(Router.lastRoute.target, '');
+        if(Router.lastRoute.target !== target) {
+            renderView(Router.lastRoute.target, '');
+        }
+        Router._rawPath = e.state.url;
     })
 
     Alpine.router = Router;
@@ -79,8 +81,7 @@ export default function (Alpine) {
     })
 
     Alpine.effect(() => {
-        console.log('wat')
-        const templateEl = Views[Router._rawPath]
+        const templateEl = Views[Router._rawPath || '/']
 
         if(templateEl){
             if (templateEl.hasAttribute('x-target'))
