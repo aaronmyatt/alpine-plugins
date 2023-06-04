@@ -5,10 +5,13 @@ export default function (Alpine) {
 
     const Router = Alpine.reactive({
         routes: [],
-        query: queryParamsToObject(window.location.search),
-        queryRaw: window.location.search,
-        path: window.location.pathname,
-        origin: window.location.origin,
+        lastRoute: {},
+        query: {},
+        queryRaw: '',
+        path: '',
+        origin: '',
+        params: {},
+        parts: [],
 
         push(path, query) {
             // remove trailing slash from path unless it's just a slash
