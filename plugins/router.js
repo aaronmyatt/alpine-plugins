@@ -13,22 +13,32 @@ export default function (Alpine) {
         params: {},
         parts: [],
 
-        push(path, query) {
-            // remove trailing slash from path unless it's just a slash
-            path = path === '/' ? path : path.replace(/\/$/, '')
+        push(slug) {
+            // separate path from query
+            const [path, query] = slug.split('?')
+            const paths = paramsFromRoute(dropTrailingSlash(path))
+            this.params = paths.params
+            this.parts = paths.parts
+            this._rawPath = dropTrailingSlash(paths.rawpath)
+
+            const state = {
+                url: dropTrailingSlash(paths.pathname),
+                target,
+            };
             if (query) {
-                const queryString = objectToQueryString(query)
-                window.history.pushState({}, '', `${path}${queryString}`)
-            } else {
-                window.history.pushState({}, '', path)
+                state.url += `?${query}`
             }
+            history.pushState(state, '', state.url)
+            this.lastRoute = state;
+            this.updateRouterValues();
+            return this;
+        },
+        updateRouterValues() {
             this.query = queryParamsToObject(window.location.search)
             this.queryRaw = window.location.search
             this.path = window.location.pathname
             this.origin = window.location.origin
-            return this;
         },
-        params: {},
         _rawPath: '', // <-- internal property, retains params
     })
 
