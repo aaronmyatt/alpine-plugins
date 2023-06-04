@@ -13,14 +13,13 @@
     <a x-route="/" class="btn btn-primary normal-case text-xl border-black border-1" >ATM - Alpine Plugins</a>
   </div>
   <main></main>
-  <div id="app"></div>
 
   <template x-view="/">
     <div class="hero min-h-screen">
       <div class="hero-content text-center flex flex-col">
           <h1 class="text-5xl font-bold">Alpine Plugins</h1>
           <div class="flex gap-4">
-            <card-button route="/router">
+            <card-button route="/router" data-test="home-router-button">
               <p>Alpine Router</p>
             </card-button>
             <card-button route="/components">Alpine Components</card-button>

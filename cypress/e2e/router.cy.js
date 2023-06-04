@@ -1,4 +1,5 @@
-const BASE_PATH = 'http://localhost:5173/router';
+const ROOT_PATH = 'http://localhost:5173';
+const BASE_PATH = ROOT_PATH+'/router';
 
 describe('router global', () => {
     beforeEach(() => {
@@ -56,21 +57,21 @@ describe('router global', () => {
 
         it('updates query', () => {
             cy.window().then((win) => {
-                win.Alpine.router.push('/newpath', { key: 'new' })
+                win.Alpine.router.push('/newpath?key=new')
                 expect(win.Alpine.router.query).to.eql({ key: 'new' })
             })
         })
 
         it('updates query string', () => {
             cy.window().then((win) => {
-                win.Alpine.router.push('/newpath', { key: 'new' })
+                win.Alpine.router.push('/newpath?key=new')
                 expect(win.Alpine.router.queryRaw).to.eql('?key=new')
             })
         })
 
         it('updates path and query', () => {
             cy.window().then((win) => {
-                win.Alpine.router.push('/newpath', { key: 'new' })
+                win.Alpine.router.push('/newpath?key=new')
                 expect(win.Alpine.router.path).to.eql('/newpath')
                 expect(win.Alpine.router.query).to.eql({ key: 'new' })
             })
@@ -78,7 +79,7 @@ describe('router global', () => {
 
         it('retains correct origin', () => {
             cy.window().then((win) => {
-                win.Alpine.router.push('/newpath', { key: 'new' })
+                win.Alpine.router.push('/newpath?key=new')
                 expect(win.Alpine.router.origin).to.eql('http://localhost:5173')
             })
         })
@@ -118,6 +119,7 @@ describe('x-route & x-view', () => {
     it('renders view on route change', () => {
         cy.get('[data-test="test-view"]').should('not.exist')
         cy.get('router-examples[index="1"]').shadow().find('a').click()
+        cy.location('pathname').should('eq', '/router/view')
         cy.get('[data-test="test-view"]').should('exist')
     })
 
@@ -131,7 +133,9 @@ describe('x-route & x-view', () => {
     })
 
     it('leaves param value in path only', () => {
+        cy.get('router-examples[index="2"]').invoke('attr', 'route').should('eq', '/router/view/name:aaron')
         cy.get('router-examples[index="2"]').shadow().find('a').click()
+
         cy.window().then((win) => {
             expect(win.location.pathname).to.eql('/router/view/aaron', 'window.location.pathname')
             expect(win.Alpine.router.path).to.eql('/router/view/aaron', 'Alpine.router.path')
@@ -157,13 +161,46 @@ describe('x-route & x-view', () => {
     })
 })
 
+describe('x-view children', () => {
+    it('renders child view when navigated to directly', () => {
+        cy.visit(BASE_PATH + '/view')
+        cy.location('pathname').should('eq', '/router/view')
+        cy.get('[data-test="test-view"]').should('exist')
+    })
+
+    it('renders child view with params when navigated to directly', () => {
+        cy.visit(BASE_PATH + '/view/aaron')
+        cy.location('pathname').should('eq', '/router/view/aaron')
+        cy.get('[data-test="test-view-params"]').should('exist')
+        cy.window().then((win) => {
+            expect(win.Alpine.router.params).to.have.keys('name')
+        })
+    })
+
+    it('renders child REMOTE view when navigated to directly', () => {
+        cy.visit(BASE_PATH + '/remote')
+        cy.location('pathname').should('eq', '/router/remote')
+        cy.get('[data-test="remote-template"]').should('exist')
+        cy.get('[data-test="router-view"]').should('exist')
+    })
+
+    it('can go "back" from a child route', () => {
+        cy.visit(ROOT_PATH)
+        cy.get('[data-test="home-router-button"]').click()
+        cy.get('router-examples[index="1"]').shadow().find('a').click()
+        cy.get('[data-test="test-view"]').should('exist')
+        cy.go('back')
+        cy.get('[data-test="test-view"]').should('not.exist')
+    })
+
+})
 
 describe('x-target', () => {
     beforeEach(() => {
         cy.visit(BASE_PATH)
     })
 
-    it('loads /view into #app', () => {
+    it.skip('loads /view into #app', () => {
         cy.get('[data-test="test-view"]').should('not.exist')
         cy.get('router-examples[index="5"]').shadow().find('a').click()
         cy.get('[data-test="test-view"]').should('exist')
@@ -174,12 +211,15 @@ describe('x-target', () => {
 
 describe('fetches html remotely if template is empty', () => {
     beforeEach(() => {
+        // visit BASE_PATH and wait for fetch to /router.html to complete
+        cy.intercept('/router.html').as('getView')
         cy.visit(BASE_PATH)
+        cy.wait('@getView')
     })
 
     it('loads remote.html', () => {
         cy.get('[data-test="remote-template"]').should('not.exist')
-        cy.get('router-examples[index="6"]').shadow().find('a').click()
+        cy.get('router-examples[index="5"]').shadow().find('a').click()
         cy.get('[data-test="remote-template"]').should('exist')
     })
 })
