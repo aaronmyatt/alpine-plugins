@@ -78,6 +78,32 @@ export default function (Alpine) {
         Views[expression].parts = expression.split('/').filter(part => part !== '');
     })
 
+    Alpine.effect(() => {
+        console.log('wat')
+        const templateEl = Views[Router._rawPath]
+
+        if(templateEl){
+            if (templateEl.hasAttribute('x-target'))
+                target = templateEl.getAttribute('x-target')
+            renderLocalOrRemoteView(templateEl, target);
+        } else{
+            const parts = Router.path.split('/').filter(part => part !== '')
+            const likelyTheRightView = Views && Object.entries(Views).find((view) => {
+                return view[1].parts.length === parts.length
+            })
+            if(likelyTheRightView){
+                const rawpath =  likelyTheRightView[1]
+                    .parts
+                    .reduce((rawpath, part, index) => {
+                        if(part === parts[index])
+                            return rawpath + part + '/'
+                        return rawpath + part + ':' + parts[index] + '/'
+                    }, '/')
+                Alpine.nextTick(() => Router.push(dropTrailingSlash(rawpath)+window.location.search))
+            }
+        }
+    })
+
     // ensure all views have been parsed then trigger initial view
     Router._rawPath = window.location.pathname
 }
