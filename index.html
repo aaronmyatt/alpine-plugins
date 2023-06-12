@@ -19,10 +19,14 @@
       <div class="hero-content text-center flex flex-col">
           <h1 class="text-5xl font-bold">Alpine Plugins</h1>
           <div class="flex gap-4">
-            <card-button route="/router" data-test="home-router-button">
-              <p>Alpine Router</p>
-            </card-button>
+            <card-button route="/router" data-test="home-router-button"> Alpine Router </card-button>
             <card-button route="/components">Alpine Components</card-button>
+            <template x-component="card-button" c-data="{route: ''}">
+              <button x-route="route" class="btn btn-primary btn-wide h-28 text-xl">
+                <slot></slot>
+                <span x-text="route"></span>
+              </button>
+            </template>
           </div>
       </div>
     </div>
@@ -30,11 +34,18 @@
   <template x-view="/components"></template>
   <template x-view="/router"></template>
 
-  <template x-component="card-button" data-route="" data-label="">
-      <button x-route="route" class="btn btn-primary btn-wide h-28 text-xl">
-        <slot></slot>
-        <span x-text="route"></span>
-      </button>
+  <template x-component="indicate-element" c-data="{
+    whatslotkey: 'id',
+    labelwrapperstart: '',
+    labelwrapperend: '',
+    label: '',
+    text: '',
+    margin: 'mr-32',
+}">
+    <div class="w-full indicator" x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend">
+      <span :class="margin" class="indicator-item indicator-end badge badge-primary" x-text="text"></span>
+      <slot></slot>
+    </div>
   </template>
 
   <script type="module" src="/main.js"></script>

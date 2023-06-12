@@ -92,45 +92,33 @@
     </div>
 </section>
 
-<template x-component="router-examples"
-          data-index data-route data-label data-template data-target
-          x-data="{ target: '', template: '', index: 0, route: '', label: '' }"
->
+<template x-component="router-examples" c-data="{ target: '', template: '', index: 0, route: '', label: '' }">
     <div class="mt-5 prose">
         <pre class="mt-2" x-show="!!template"><code x-text="template"></code></pre>
         <div x-show="!!template" class="flex w-full flex-col border-opacity-50">
-            <div class="divider" x-cloak>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="h-6 w-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
-                </svg>
-            </div>
+            <daisy-divider></daisy-divider>
         </div>
-        <indicate-element>
-            <section :id="`example-${index}`" class="w-full rounded-xl p-8 text-center bg-secondary" x-effect="() => {
-                    if($el.innerHTML.trim() === ''){
-                        $el.innerHTML = '<default-content></default-content>'
-                    }
+        <indicate-element margin="mr-12" labelwrapperstart="#" >
+            <section :id="`example-${index}`" class="w-full rounded-xl p-8 text-center bg-secondary"
+                 x-effect="() => {
+                    if($el.innerHTML.trim() === '') $el.innerHTML = '<default-content></default-content>'
                 }">
-                <default-content :target="target" :index="index"></default-content>
+                <default-content></default-content>
             </section>
         </indicate-element>
     </div>
 
-    <template x-component="default-content" data-target data-index>
+    <template x-component="default-content">
         <a class="btn btn-outline" :x-target="target || `#example-${index}`" x-route="route"> Click this <i class="pl-1"> x-route</i></a>
     </template>
-</template>
-
-<template x-component="indicate-element">
-    <div class="w-full indicator">
-  <span class="mr-20 indicator-item indicator-end badge badge-primary">
-    x-target="
-    <span x-text="slots.default.id"></span>
-    "
-  </span>
-        <slot></slot>
-    </div>
+    <template x-component="daisy-divider">
+        <div class="divider" x-cloak>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3"
+                 stroke="currentColor" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
+            </svg>
+        </div>
+    </template>
 </template>
 
 <template x-view="/router/view" x-target="#example-1">
