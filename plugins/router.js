@@ -1,7 +1,12 @@
 export default function (Alpine) {
     Alpine.defaultTarget = Alpine.defaultTarget || 'main'
     let target = Alpine.defaultTarget
-    const Views = Alpine.reactive({})
+    const Views = {}
+
+    Alpine.directive('view', (el, {expression}) => {
+        Views[expression] = el;
+        Views[expression].parts = expression.split('/').filter(part => part !== '');
+    })
 
     const Router = Alpine.reactive({
         routes: [],
@@ -39,10 +44,11 @@ export default function (Alpine) {
             this.path = window.location.pathname
             this.origin = window.location.origin
         },
-        _rawPath: '', // <-- internal property, retains params
+        _rawPath: '/', // <-- internal property, retains params
     })
 
     window.addEventListener('popstate', (e) => {
+        e.preventDefault()
         target = Alpine.defaultTarget
         if(Router.lastRoute.target !== target) {
             renderView(Router.lastRoute.target, '');
@@ -75,13 +81,9 @@ export default function (Alpine) {
         }
     })
 
-    Alpine.directive('view', (el, {expression}) => {
-        Views[expression] = el;
-        Views[expression].parts = expression.split('/').filter(part => part !== '');
-    })
-
     Alpine.effect(() => {
         const templateEl = Views[Router._rawPath || '/']
+        console.log(templateEl)
 
         if(templateEl){
             if (templateEl.hasAttribute('x-target'))
@@ -124,11 +126,11 @@ export default function (Alpine) {
             return longest
         }, document.querySelector(`[x-view="/"]`))
 
-    document.addEventListener('alpine:init', () => {
+    document.addEventListener('alpine:initialized', () => {
         if (mostLikelyBaseView) {
             renderLocalOrRemoteView(mostLikelyBaseView, Alpine.defaultTarget)
                 .then(_ => {
-                    Router.push(pathname+window.location.search);
+                    Alpine.nextTick(() => Router.push(pathname+window.location.search));
                 });
         } else {
             Router.push(pathname+window.location.search);
@@ -159,15 +161,16 @@ function renderView(target, html, initTree = true) {
     const notInTheShadowDom = document.querySelector(target)
     if (notInTheShadowDom) {
         notInTheShadowDom.innerHTML = html;
-        initTree && Alpine.initTree(notInTheShadowDom);
-    } else
+        Alpine.initTree(notInTheShadowDom);
+    } else {
         window.components && window.components.map(component => {
             const el = component.shadowRoot.querySelector(target)
             if (el) {
                 component.shadowRoot.querySelector(target).innerHTML = html
-                initTree && Alpine.initTree(el);
+                Alpine.initTree(el);
             }
         })
+    }
 }
 
 function paramsFromRoute(path) {
