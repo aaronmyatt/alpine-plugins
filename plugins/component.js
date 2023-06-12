@@ -1,15 +1,33 @@
 // Define a new Alpine.js plugin
 export default function registerWebComponents(Alpine) {
-    window.components = window.components || [];
+    window.components = window.components || Alpine.reactive([]);
     const ALPINE_ATTRIBUTE_PREFIX = 'x-';
 
-    Alpine.directive('component', (el, { expression }, { effect }) => {
+    Alpine.directive('component', (el, { expression }, { effect, evaluate }) => {
+        if(el.tagName !== "TEMPLATE") return;
         if (customElements.get(expression)) return;
-        // Get the component name from the `x-component` directive
-        const componentName = expression;
+        const staticComponent = !el.hasAttribute('c-data');
 
-        // Get the property names and default values from the <template> tag
-        const properties = Object.assign({}, el.dataset);
+        const componentName = expression.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+        const data = evaluate(el.getAttribute('c-data') || '{}' );
+
+        Alpine.data(componentName, () => {
+            return {
+                ...data,
+                componentName,
+                slots: {
+                    default: {}
+                }
+            }
+        })
+
+        Alpine.store(componentName, {
+            ...data,
+            slots: {
+                default: {}
+            }
+        })
+
         const alpineDirectives = el.getAttributeNames()
             .filter((attributeName) => {
                 return attributeName.startsWith(ALPINE_ATTRIBUTE_PREFIX) && attributeName !== "x-component";
@@ -23,6 +41,10 @@ export default function registerWebComponents(Alpine) {
                 return { ...acc, ...curr };
             }, {});
 
+        const properties = new Set(['slots'])
+        Object.keys(data).forEach((propertyName) => {
+            properties.add(propertyName);
+        })
 
         // Define a new WebComponent class
         class CustomElement extends HTMLElement {
@@ -31,60 +53,38 @@ export default function registerWebComponents(Alpine) {
             constructor() {
                 super();
 
+                // console.log('constructor', componentName, this)
                 // Wrap the <template> tag in a <div> tag with the `x-data` attribute
                 this.alpineWrapper = document.createElement('div');
-                properties.componentName = componentName;
-                properties.slots = {
-                    default: {}
-                    // convert componentName like card-button, to function name like cardButton
-                }
-
-                if ('x-data' in alpineDirectives) {
-                    // skip!
-                } else {
-                    // const alpineDataName = componentName.split("-").map((word, index) => {
-                    //     if (index === 0) {
-                    //         return word;
-                    //     }
-                    //     return word.charAt(0).toUpperCase() + word.slice(1);
-                    // }).join("");
-                    // const data = structuredClone(properties);
-                    // Alpine.data(alpineDataName, _ => data)
-                    this.alpineWrapper.setAttribute('x-data', JSON.stringify(properties));
-                }
-
-                Object.keys(alpineDirectives).forEach((directive) => {
-                    this.alpineWrapper.setAttribute(directive, alpineDirectives[directive]);
+                // Add any Alpine directives to the wrapper
+                Object.keys(alpineDirectives).forEach((directiveName) => {
+                    this.alpineWrapper.setAttribute(directiveName, alpineDirectives[directiveName]);
                 });
-                // Define getters and setters for each property
-                Object.keys(properties).forEach((propertyName) => {
-                    Object.defineProperty(this, propertyName, {
-                        get() {
-                            return Alpine.$data(this.shadowRoot.firstChild)[propertyName]
-                        },
-                        set(value) {
-                            this.shadowRoot && this.shadowRoot.firstChild && (Alpine.$data(this.shadowRoot.firstChild)[propertyName] = value);
-                        },
-                    });
-                });
+                this.alpineWrapper.setAttribute('x-data', componentName);
+                this.alpineWrapper.setAttribute('id', 'alpinewrapper');
+                this.attachShadow({ mode: 'open' });
+
+                this.registerGetterSetters(this.shadowRoot);
+
+                this.cloneOrFetchTemplate().then(componentTemplate => {
+                    this.addStylesIfPresent(componentTemplate);
+                    this.alpineWrapper.appendChild(componentTemplate);
+                    this.shadowRoot.appendChild(this.alpineWrapper);
+                    Alpine.initTree(this.shadowRoot.firstChild);
+                    this.shareStylesWithDocument();
+                    this.registerSlots(this.shadowRoot)
+                })
+                window.components.push(this);
             }
 
             async connectedCallback() {
-                window.components.push(this);
-                this.attachShadow({ mode: 'open' });
-                // Get the contents of the <template> tag and attach it to the shadow DOM
-                const componentTemplate = await this.cloneOrFetchTemplate();
-                this.alpineWrapper.appendChild(componentTemplate);
-                this.shadowRoot.appendChild(this.alpineWrapper);
-                this.addStylesIfPresent(componentTemplate);
-                this.shareStylesWithDocument();
-                Alpine.initTree(this.shadowRoot.firstChild);
-                this.registerProps()
-                this.registerSlots()
+                Alpine.nextTick(() => {
+                    this.initialiseProps();
+                })
             }
 
             static get observedAttributes() {
-                return Object.keys(properties);
+                return properties;
             }
 
             attributeChangedCallback(name, _oldValue, newValue) {
@@ -106,7 +106,7 @@ export default function registerWebComponents(Alpine) {
                 if (hasNonSlotChildren) {
                     return el.content.cloneNode(true);
                 } else {
-                    return fetch(`${componentName}.html`)
+                    return fetch(`${CustomElement.componentName}.html`)
                         .then((response) => response.text())
                         .then((html) => {
                             el.innerHTML = `${html}${el.innerHTML}`;
@@ -129,26 +129,42 @@ export default function registerWebComponents(Alpine) {
                 })
             }
 
-            registerProps() {
-                Object.keys(properties).forEach((propertyName) => {
+            registerGetterSetters(shadow) {
+                properties.forEach((propertyName) => {
+                    Object.defineProperty(this, propertyName, {
+                        get() {
+                            return shadow.firstChild && Alpine.$data(shadow.firstChild)[propertyName]
+                        },
+                        set(value) {
+                            shadow.firstChild && (Alpine.$data(shadow.firstChild)[propertyName] = value)
+                        },
+                    });
+                });
+            }
+
+            initialiseProps() {
+                properties.forEach((propertyName) => {
                     if (this.hasAttribute(propertyName)) {
                         this[propertyName] = this.getAttribute(propertyName);
                     }
                 });
             }
 
-            registerSlots() {
-                this.shadowRoot.querySelectorAll("slot").forEach((slot) => {
-                    slot.addEventListener("slotchange", (e) => {
-                        const slotChild = slot.assignedElements().slice(0, 1).pop();
-                        this.slots[slot.name || 'default'] = slotChild;
-                    });
-                })
+            registerSlots(shadow) {
+                const self = this;
+                shadow.addEventListener("slotchange", (e) => {
+                    const slotChild = e.target.assignedElements().slice(0, 1).pop();
+                    self.slots[e.target.name || 'default'] = slotChild;
+                });
+            }
+
+            static get componentName(){
+                return expression;
             }
         }
 
         // Register the WebComponent with the custom element name
-        customElements.define(componentName, CustomElement);
+        customElements.define(CustomElement.componentName, CustomElement);
     });
 }
 
