@@ -1,13 +1,13 @@
-<div class="prose">
-<section class="container mx-auto p-2 prose">
-  <div class="mx-auto max-w-lg rounded-xl p-2 text-justify bg-secondary" x-component="not-basic-component">
-    <h1> Alpine Components </h1>
+<div class="prose max-w-full w-full">
+<section class="container mx-auto p-2">
+  <div class="flex items-center justify-center max-w-lg md:max-w-full rounded-xl p-2 bg-secondary" x-component="not-basic-component">
+    <h1 class="my-8"> Alpine Components </h1>
   </div>
 </section>
 
-<section class="container mx-auto p-2 prose" x-data>
-  <div class="mx-auto max-w-lg rounded-xl p-2 text-justify bg-secondary">
-    <h3> Basic Component </h3>
+<section class="container mx-auto p-2" x-data>
+  <div class="mx-auto rounded-xl p-2 text-justify bg-secondary">
+    <h3> A Basic Component </h3>
     <p> Elements with the <code class="px-0">x-component="component-name"</code> directive become browser native custom elements! </p>
     <code>&lt;template x-component="component-name"&gt;&lt;/template&gt;</code>
     <p>Which can then be used anywhere in your page/SPA project like: <code>&lt;component-name&gt;&lt;/component-name&gt;</code></p>
@@ -16,15 +16,15 @@
     </component-example>
   </div>
   <template x-component="basic-component" x-ref="basic-component">
-    <div class="text-center bg-accent p-1 rounded-lg shadow-xl">
+    <component-wrapper class="prose">
       <p> 👆This is a basic component. </p>
       <p> Check this pages source for: <code>&lt;template x-component="basic-component"&gt;&lt;/template&gt;</code> element </p>
-    </div>
+    </component-wrapper>
   </template>
 </section>
 
-<section class="container mx-auto p-2 prose" x-data="{ template: document.querySelector('template[x-component=&quot;data-component&quot;]').outerHTML }">
-  <div class="mx-auto max-w-lg rounded-xl p-2 text-justify bg-secondary">
+<section class="container mx-auto p-2" x-data="{ template: document.querySelector('template[x-component=&quot;data-component&quot;]').outerHTML }">
+  <div class="mx-auto rounded-xl p-2 text-justify bg-secondary">
     <h3> x-data </h3>
     <component-example :template="template">
       <data-component></data-component>
@@ -32,44 +32,47 @@
   </div>
 </section>
 
-<section class="container mx-auto p-2 prose" x-data="{ template: document.querySelector('template[x-component=&quot;attr-component&quot;]').outerHTML }">
-  <div class="mx-auto max-w-lg rounded-xl p-2 text-justify bg-secondary">
+<section class="container mx-auto p-2" x-data="{ template: document.querySelector('template[x-component=&quot;attr-component&quot;]').outerHTML }">
+  <div class="mx-auto rounded-xl p-2 text-justify bg-secondary">
     <h3> Custom Element Attributes </h3>
     <component-example :template="template">
-      <attr-component class="w-full" foo="foobar"></attr-component>
+      <attr-component foo="foobar"></attr-component>
     </component-example>
   </div>
 </section>
 </div>
 
 <template x-component="data-component" x-ref="data-component" c-data="{foo: 'bar'}">
-  <div class="text-center bg-accent p-1 rounded-lg shadow-xl prose">
+  <component-wrapper class="prose">
     <p>Use <strong>x-data</strong> as you normally would on a component template to share it across custom element instances</p>
     <pre><code>c-data="{foo: 'bar'}"</code></pre>
     <p x-text="foo"> </p>
     <p>Alpine Components also exposes the x-data properties as convenient element properties! Try this in your browser console:</p>
     <pre>document.querySelector('data-component').foo</pre>
     <p>Tada! <span x-text="$root.parentNode.host.foo"></span></p>
-  </div>
+  </component-wrapper>
 </template>
 
 <template x-component="attr-component" x-ref="attr-component" c-data="{foo: 'bar'}">
-  <div class="text-center bg-accent p-1 rounded-lg shadow-xl prose">
+  <component-wrapper class="prose">
     <pre><code>c-data="{foo: 'bar'}"</code></pre>
     <pre>&lt;attr-component foo="foobar"...</pre>
     <p x-text="foo"> </p>
-  </div>
+  </component-wrapper>
 </template>
 
 <template x-component="component-example" c-data="{template: ''}">
-  <div class="mt-5 prose">
+  <div class="mt-5 prose max-w-full">
     <pre class="mt-2" x-show="!!template" x-text="template.trim()"></pre>
     <div x-show="!!template" class="flex w-full flex-col border-opacity-50">
       <daisy-divider></daisy-divider>
     </div>
-    <indicate-element :label="slots.default?.tagName?.toLowerCase()" labelWrapperStart="x-component=&quot;" labelWrapperEnd="&quot;">
-      <slot></slot>
-    </indicate-element>
+    <div class="flex justify-center">
+      <indicate-element :label="slots.default?.tagName?.toLowerCase()" labelWrapperStart="x-component=&quot;"
+                        labelWrapperEnd="&quot;">
+        <slot></slot>
+      </indicate-element>
+    </div>
   </div>
 </template>
 
@@ -79,5 +82,11 @@
          stroke="currentColor" class="h-6 w-6">
       <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"/>
     </svg>
+  </div>
+</template>
+
+<template x-component="component-wrapper">
+  <div class="text-center bg-accent p-1 m-4 rounded-lg shadow-xl mt-2 max-w-lg md:max-w-2xl lg:max-w-full">
+    <slot></slot>
   </div>
 </template>

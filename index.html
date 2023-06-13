@@ -42,7 +42,7 @@
     text: '',
     margin: 'mr-32',
 }">
-    <div class="w-full indicator" x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend">
+    <div class="indicator" x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend">
       <span :class="margin" class="indicator-item indicator-end badge badge-primary" x-text="text"></span>
       <slot></slot>
     </div>
