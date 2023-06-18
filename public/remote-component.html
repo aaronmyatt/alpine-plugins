@@ -1,0 +1,29 @@
+<style>
+    @keyframes slidein {
+        from {
+            margin-left: 100%;
+            width: 300%;
+        }
+
+        to {
+            margin-left: 0%;
+            width: 100%;
+        }
+    }
+    #sky {
+        overflow: hidden;
+    }
+    #plane {
+        animation-duration: 3s;
+        animation-name: slidein;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+    }
+</style>
+<component-wrapper>
+    <p data-test="remote-content">This content was pulled from the <span class="text-[2em]">☁️</span>️</p>
+    <p>Organise your project better by hosting large, offscreen component templates remotely.</p>
+    <div id="sky" class="flex items-center">
+        <div id="plane"><span class="text-[2em]">✈</span></div>
+    </div>
+</component-wrapper>

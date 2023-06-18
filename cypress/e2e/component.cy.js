@@ -12,6 +12,7 @@ describe('x-route', () => {
     beforeEach(() => {
         // visit BASE_PATH and wait for fetch to /router.html to complete
         cy.intercept('/components.html').as('getView')
+        cy.intercept('/remote-component.html').as('remote')
         cy.visit(BASE_PATH)
         cy.wait('@getView')
     })
@@ -34,6 +35,18 @@ describe('x-route', () => {
                         expect(win.customElements.get(componentName)).to.be.undefined
                     })
                 })
+    })
+
+    describe('remote templates', () => {
+        it.skip('request for remote content', () => {
+            cy.wait('@remote').its('response.body').should('include', 'This is remote content')
+        })
+
+        it('are fetched public directory', () => {
+            const componentName = 'remote-component'
+            cy.get(componentName).should('exist')
+            cy.get(componentName).shadow().find('[data-test="remote-content"]').should('exist')
+        })
     })
 
     describe(COMPONENT_DATA_ATTR, () => {
@@ -129,23 +142,18 @@ describe('x-route', () => {
         cy.get(componentName).shadow().find('#inside-sub-component').should('exist')
       })
     })
-})
 
-        describe('remote templates', () => {
-            it.skip('with x-component directive become web components', () => {
-                const componentName = 'basic-component'
-                cy.get(`template[x-component="${componentName}"]`).should('exist')
-                cy.get(componentName).should('exist')
-                cy.window().then((win) => {
-                    expect(win.customElements.get(componentName)).to.be.ok
-                })
-            })
+    describe('styles', () => {
+        const componentName = 'basic-component'
+        it('are inherited from the parent document', () => {
+            cy.get(componentName).should('exist')
+            cy.get(componentName).shadow().find('style').should('have.length.at.least', 2)
+        })
+        it('uses inline styles if they are present', () => {
+            cy.get(componentName).should('exist')
+            cy.get(componentName).shadow().find('#inlinestyles').should('exist')
+            cy.get(componentName).shadow().should('include.text', '😎')
         })
 
-
-
-        // it('x-data values are also accessible on the custom element instance', () => {
-        //     const componentName = 'data-component'
-        //     cy.get(componentName).should('exist')
-        //     cy.get(componentName).invoke('prop', 'foo').should('eq', 'bar')
-        // })
+    })
+})
