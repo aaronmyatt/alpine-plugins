@@ -42,8 +42,8 @@
     label: '',
     text: '',
 }">
-    <div x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend" class="flex justify-end">
-      <span class="badge badge-primary" x-text="text"></span>
+    <div x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend" class="flex justify-end mt-2">
+      <span class="badge badge-primary -mb-5" x-text="text"></span>
     </div>
     <slot></slot>
   </template>
