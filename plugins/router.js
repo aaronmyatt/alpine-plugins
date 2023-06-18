@@ -47,6 +47,15 @@ export default function (Alpine) {
         _rawPath: '/', // <-- internal property, retains params
     })
 
+    const routeChangeHandler = () => {
+        Alpine.nextTick(() => {
+            Router.push(pathname + window.location.search)
+            removeEventListener('routechange', routeChangeHandler, false);
+        });
+    }
+    window.addEventListener('routechange', routeChangeHandler)
+
+
     window.addEventListener('popstate', (e) => {
         e.preventDefault()
         target = Alpine.defaultTarget
@@ -58,6 +67,10 @@ export default function (Alpine) {
 
     Alpine.router = Router;
     Alpine.views = Views;
+    // to avoid reactive changes to the array
+    function getView(path) {
+        return Views[path]
+    }
 
     Alpine.directive('route', (el, {expression}, {evaluateLater}) => {
         Router.routes.push(el);
@@ -81,15 +94,20 @@ export default function (Alpine) {
         }
     })
 
+    Alpine.magic('router', () => Router)
+
     Alpine.effect(() => {
-        const templateEl = Views[Router._rawPath || '/']
-        console.log(templateEl)
+        const templateEl = getView(Router._rawPath)
 
         if(templateEl){
             if (templateEl.hasAttribute('x-target'))
                 target = templateEl.getAttribute('x-target')
-            renderLocalOrRemoteView(templateEl, target);
-        } else{
+            renderLocalOrRemoteView(templateEl, target).then(() => {
+                const RouteChangeEvent = new Event('routechange')
+                Alpine.nextTick(() => dispatchEvent(RouteChangeEvent))
+            });
+        }
+        else{
             const parts = Router.path.split('/').filter(part => part !== '')
             const likelyTheRightView = Views && Object.entries(Views).find((view) => {
                 return view[1].parts.length === parts.length
@@ -119,22 +137,25 @@ export default function (Alpine) {
             const key = `/${part}`
             return document.querySelector(`template[x-view="${key}"]`)
         })
+        // filter out nulls
+        .filter(el => el)
         // keep the longest match
-        .reduce((longest, current) => {
+        .reduce((longest, current, index, arr) => {
+            if(index === 0) return current;
             if (current && current.getAttribute('x-view').length > longest.getAttribute('x-view').length)
                 return current
             return longest
-        }, document.querySelector(`[x-view="/"]`))
+        }, null)
 
     document.addEventListener('alpine:initialized', () => {
-        if (mostLikelyBaseView) {
-            renderLocalOrRemoteView(mostLikelyBaseView, Alpine.defaultTarget)
-                .then(_ => {
-                    Alpine.nextTick(() => Router.push(pathname+window.location.search));
-                });
-        } else {
-            Router.push(pathname+window.location.search);
-        }
+            if(mostLikelyBaseView && mostLikelyBaseView.getAttribute('x-view') === pathname){
+                Router.push(pathname+window.location.search);
+            } else if(mostLikelyBaseView) {
+                Router.push(mostLikelyBaseView.getAttribute('x-view')+window.location.search)
+            }else{
+                removeEventListener('routechange', routeChangeHandler, false);
+                Router.push(pathname+window.location.search)
+            }
     });
 }
 
@@ -161,13 +182,13 @@ function renderView(target, html, initTree = true) {
     const notInTheShadowDom = document.querySelector(target)
     if (notInTheShadowDom) {
         notInTheShadowDom.innerHTML = html;
-        Alpine.initTree(notInTheShadowDom);
+        initTree && Alpine.initTree(notInTheShadowDom);
     } else {
         window.components && window.components.map(component => {
             const el = component.shadowRoot.querySelector(target)
             if (el) {
                 component.shadowRoot.querySelector(target).innerHTML = html
-                Alpine.initTree(el);
+                initTree && Alpine.initTree(el);
             }
         })
     }
