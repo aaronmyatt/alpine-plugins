@@ -121,9 +121,14 @@ export default function registerWebComponents(Alpine) {
             }
 
             shareStylesWithDocument() {
-                const style = document.createElement("style");
-                style.textContent = `@import url(${document.styleSheets[0].href})`
-                this.shadowRoot.appendChild(style);
+                // iterate over document stylesheets and import them into the shadow dom
+                for(const styleSheet of document.styleSheets) {
+                    if (styleSheet.href) {
+                        const style = document.createElement("style");
+                        style.textContent = `@import url(${styleSheet.href})`
+                        this.shadowRoot.appendChild(style);
+                    }
+                }
             }
 
             addStylesIfPresent(componentTemplate) {
