@@ -40,12 +40,11 @@
     labelwrapperend: '',
     label: '',
     text: '',
-    margin: 'mr-32',
 }">
-    <div class="indicator" x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend">
-      <span :class="margin" class="indicator-item indicator-end badge badge-primary" x-text="text"></span>
-      <slot></slot>
+    <div x-effect="text = labelwrapperstart + (label || slots.default[whatslotkey]) + labelwrapperend" class="flex justify-end">
+      <span class="badge badge-primary" x-text="text"></span>
     </div>
+    <slot></slot>
   </template>
 
   <script type="module" src="/main.js"></script>
