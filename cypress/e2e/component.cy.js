@@ -92,6 +92,43 @@ describe('x-route', () => {
             cy.get(componentName).shadow().should('include.text', 'somethingnew')
         })
     })
+
+    describe('slots', () => {
+        let componentName = 'slot-component'
+
+        it(`work as expected`, () => {
+            cy.get(componentName).should('exist')
+            cy.get(componentName).should('include.text', 'This is <slot> content')
+            cy.get(componentName).shadow().should('include.text', 'Not slot content')
+        })
+
+        it(`can be referenced within the component`, () => {
+            cy.get(componentName).should('exist')
+            cy.get(componentName).shadow().should('include.text', 'Not slot content')
+            cy.get(componentName).shadow().should('include.text', 'This named slot is called: namedslot')
+        })
+
+        it(`can be unique per component instance`, () => {
+            cy.visit(BASE_PATH+'?test=1')
+            cy.get('main').find(componentName).should('have.length', 2)
+            componentName = '[data-test="alt-slot-component"]'
+            cy.get(componentName).should("exist")
+            cy.get(componentName).shadow().should('include.text', 'Not slot content')
+            cy.get(componentName).should('include.text', 'but different')
+        })
+    })
+
+    // describe subcomponents
+    describe('subcomponents', () => {
+      it('within a parent component work normally', () => {
+        const componentName = 'parent-component'
+        cy.get(componentName).should('exist')
+        cy.get(componentName).shadow().find('child-component').should('exist')
+        cy.get(componentName).shadow().find('sub-component').should('exist')
+        cy.get(componentName).shadow().find('#inside-child-component').should('exist')
+        cy.get(componentName).shadow().find('#inside-sub-component').should('exist')
+      })
+    })
 })
 
         describe('remote templates', () => {
