@@ -6,10 +6,10 @@ export default defineConfig({
         minify: false,
         lib: {
             // Could also be a dictionary or array of multiple entry points
-            entry: [resolve(__dirname, 'main.js')],
-            name: 'AlpineRouter',
+            entry: [resolve(__dirname, 'plugins/router.js'), resolve(__dirname, 'plugins/component.js')],
+            // name: 'AlpineRouter',
             // the proper extensions will be added
-            fileName: 'alpine-router',
+            fileName: (ft, name) => `${name}/index.${ft}.js`
         },
         rollupOptions: {
             // make sure to externalize deps that shouldn't be bundled
