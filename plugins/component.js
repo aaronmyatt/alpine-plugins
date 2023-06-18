@@ -41,7 +41,7 @@ export default function registerWebComponents(Alpine) {
                 return { ...acc, ...curr };
             }, {});
 
-        const properties = new Set(['slots'])
+        const properties = new Set(['slots', 'componentName'])
         Object.keys(data).forEach((propertyName) => {
             properties.add(propertyName);
         })
@@ -74,17 +74,20 @@ export default function registerWebComponents(Alpine) {
                     this.shareStylesWithDocument();
                     this.registerSlots(this.shadowRoot)
                 })
-                window.components.push(this);
+                    .then(() => {
+                        Alpine.nextTick(() => {
+                            this.initialiseProps();
+                        })
+                        window.components.push(this);
+                    })
             }
 
-            async connectedCallback() {
-                Alpine.nextTick(() => {
-                    this.initialiseProps();
-                })
+            connectedCallback() {
+
             }
 
             static get observedAttributes() {
-                return properties;
+                return Array.from(properties);
             }
 
             attributeChangedCallback(name, _oldValue, newValue) {
@@ -167,5 +170,3 @@ export default function registerWebComponents(Alpine) {
         customElements.define(CustomElement.componentName, CustomElement);
     });
 }
-
-// Register the plugin with Alpine.js
