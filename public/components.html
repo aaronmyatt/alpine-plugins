@@ -1,7 +1,21 @@
 <div class="container mx-auto">
     <div class="w-full max-w-full p-2 prose space-y-5">
-        <div class="rounded-xl p-2 text-center bg-secondary w-full md:w-fit md:px-32 mx-auto" x-component="not-basic-component">
-            <h1 class="my-8"> Alpine Components </h1>
+        <div class="text-xl rounded-xl p-2 bg-secondary p-14 mx-auto text-justify " x-component="not-basic-component">
+            <h1 class="text-center"> Alpine Components </h1>
+            <p>No longer lament the absence of components in Alpine.js!</p>
+            <p>
+                Isolate your component HTML inside of <i>&lt;template></i> elements and add the <i>x-component="some-name"</i> directive.
+                Alpine Components will take over and register a web component with the HTML you've provided.
+                Add functionality with a <i>c-data=""</i> attribute instead of <i>x-data=""</i> and you're good to go!
+            </p>
+            <p>
+                Now you can enjoy the full power of Alpine.js with the code organisation of Vue or React!
+            </p>
+
+            <p class="text-center">
+                <i>template</i> ➕ <i>x-component</i> ➕ <i>c-data</i> ➡️ <i>&lt;web-component>&lt;/web-component></i> 🔥
+            </p>
+
         </div>
 
         <section>
@@ -11,7 +25,7 @@
                     <p> Template elements with the <code class="px-0">x-component="component-name"</code> directive become browser native custom elements.</p>
                     <code>&lt;template x-component="basic-component"&gt;&lt;/template&gt;</code>
                     <p>Which can then be used anywhere in your page/SPA project like:</p>
-                    <code class="block text-center">&lt;basic-component&gt;&lt;/basic-component&gt;</code>
+                    <code class="block">&lt;basic-component&gt;&lt;/basic-component&gt;</code>
                 </copy-wrapper>
                 <component-example :template="$refs['basic-component'].outerHTML">
                     <basic-component></basic-component>
@@ -188,7 +202,7 @@
 
     <template x-component="parent-component" x-ref="parent-component">
         <component-wrapper>
-            <div class="prose flex flex-col items-center">
+            <div class="prose w-full max-w-full flex flex-col items-center">
                 <h3>Parent Content</h3>
                 <component-example>
                     <child-component></child-component>
