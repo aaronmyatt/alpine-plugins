@@ -5,7 +5,8 @@ export default defineConfig(({mode}) => {
     const env = loadEnv(mode, process.cwd(), '')
 
     return {
-        base: '/alpine-plugins/',
+        base: mode === 'build' ? '/alpine-plugins/' : '',
+        // base: '/alpine-plugins/',
         build: {
             minify: false,
             lib: env.lib ? {

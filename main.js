@@ -16,6 +16,7 @@ Alpine.data('DataMagic', () => ({
     }
 }))
 
+Alpine.baseUrl = import.meta.env.BASE_URL
 Alpine.plugin(registerWebComponents)
 Alpine.plugin(router)
 window.Alpine = Alpine

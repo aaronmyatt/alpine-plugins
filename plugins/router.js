@@ -1,5 +1,6 @@
 export default function (Alpine) {
     Alpine.defaultTarget = Alpine.defaultTarget || 'main'
+    Alpine.baseUrl = Alpine.baseUrl || ''
     let target = Alpine.defaultTarget
     const Views = {}
 
@@ -24,8 +25,7 @@ export default function (Alpine) {
             const paths = paramsFromRoute(dropTrailingSlash(path))
             this.params = paths.params
             this.parts = paths.parts
-            this._rawPath = dropTrailingSlash(paths.rawpath)
-
+            this._rawPath = dropTrailingSlash(paths.rawpath).replace(dropTrailingSlash(Alpine.baseUrl), paths.rawpath===Alpine.baseUrl ? '/' : '')
             const state = {
                 url: dropTrailingSlash(paths.pathname),
                 target,
@@ -81,7 +81,7 @@ export default function (Alpine) {
                 target = el.getAttribute('x-target') || Alpine.defaultTarget
                 if (linkIsInternal(route)) {
                     e && e.preventDefault()
-                    Router.push(route)
+                    Router.push(Alpine.baseUrl+route)
                 }
             })
         })
@@ -108,7 +108,7 @@ export default function (Alpine) {
             });
         }
         else{
-            const parts = Router.path.split('/').filter(part => part !== '')
+            const parts = Router._rawPath.split('/').filter(part => part !== '')
             const likelyTheRightView = Views && Object.entries(Views).find((view) => {
                 return view[1].parts.length === parts.length
             })
@@ -131,7 +131,9 @@ export default function (Alpine) {
     // so we need to see if any of the parent templates in the current html file match a "part" of the
     // pathname and load that view first - much like you would a layout in a traditional router
 
-    const mostLikelyBaseView = pathname.split('/')
+    const mostLikelyBaseView = pathname
+        .replace(dropTrailingSlash(Alpine.baseUrl), '/')
+        .split('/')
         .filter((key) => key !== '')
         .map(part => {
             const key = `/${part}`
