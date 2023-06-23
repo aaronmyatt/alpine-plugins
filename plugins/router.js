@@ -25,7 +25,7 @@ export default function (Alpine) {
             const paths = paramsFromRoute(dropTrailingSlash(path))
             this.params = paths.params
             this.parts = paths.parts
-            this._rawPath = dropTrailingSlash(paths.rawpath).replace(dropTrailingSlash(Alpine.baseUrl), paths.rawpath===Alpine.baseUrl ? '/' : '')
+            this._rawPath = normalisePath(paths.rawpath)
             const state = {
                 url: dropTrailingSlash(paths.pathname),
                 target,
@@ -44,7 +44,7 @@ export default function (Alpine) {
             this.path = window.location.pathname
             this.origin = window.location.origin
         },
-        _rawPath: '/', // <-- internal property, retains params
+        _rawPath: '', // <-- internal property, retains params
     })
 
     const routeChangeHandler = () => {
@@ -254,4 +254,9 @@ function getQueryParams(search) {
 
 function dropTrailingSlash(path) {
     return path === '/' ? path : path.replace(/\/$/, '');
+}
+function normalisePath(path) {
+    if(Alpine.baseUrl === '/') return dropTrailingSlash(path);
+    return dropTrailingSlash(path)
+        .replace(dropTrailingSlash(Alpine.baseUrl),path===Alpine.baseUrl ? '/' : '');
 }
