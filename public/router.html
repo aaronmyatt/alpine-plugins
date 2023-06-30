@@ -38,14 +38,26 @@
 >
     <h2>Examples</h2>
 
-    <router-examples index="1" route="/router/view"
-                     :template="example1"></router-examples>
-    <router-examples index="2" route="/router/view/name:aaron"
-                     :template="example2"></router-examples>
-    <router-examples index="3" route="/router/view/product:alpine/static"
-                   :template="example3"></router-examples>
-    <router-examples index="4" :route="`/router/view/product:cheese/static/category:${dynamicParam}`"
-                   :template="example4"></router-examples>
+    <router-examples index="1" :template="example1">
+        <div id="example-1">
+            <default-content index="1" route="/router/view"></default-content>
+        </div>
+    </router-examples>
+    <router-examples index="2" :template="example2">
+        <div id="example-2">
+            <default-content index="2" route="/router/view/name:aaron"></default-content>
+        </div>
+    </router-examples>
+    <router-examples index="3" :template="example3">
+        <div id="example-3">
+            <default-content index="1" route="/router/view/product:alpine/static"></default-content>
+        </div>
+    </router-examples>
+    <router-examples index="4" :template="example4">
+        <div id="example-4">
+            <default-content index="4" :route="`/router/view/product:cheese/static/category:${dynamicParam}`" ></default-content>
+        </div>
+    </router-examples>
 
     <div class="mx-auto mt-4 rounded-xl p-2 text-justify bg-secondary">
         <h2>Remote Views</h2>
@@ -55,7 +67,11 @@
             <i>/router/remote.html</i>
         </p>
     </div>
-    <router-examples index="5" route="/router/remote"></router-examples>
+    <router-examples index="5" >
+        <div id="example-5">
+            <default-content index="5" route="/router/remote" ></default-content>
+        </div>
+    </router-examples>
 
     <div class="mx-auto mt-4 rounded-xl p-2 text-justify bg-secondary">
         <h2>Child Routes and Views</h2>
@@ -92,23 +108,23 @@
     </div>
 </section>
 
-<template x-component="router-examples" c-data="{ target: '', template: '', index: 0, route: '', label: '' }">
+<template x-component="router-examples" c-data="{ template: '', index: 0}">
     <div class="mt-5 prose">
         <pre class="mt-2" x-show="!!template"><code x-text="template"></code></pre>
         <div x-show="!!template" class="flex w-full flex-col border-opacity-50">
             <daisy-divider></daisy-divider>
         </div>
-        <indicate-element margin="mr-12" labelwrapperstart="#" >
-            <section :id="`example-${index}`" class="w-full rounded-xl p-8 text-center bg-secondary"
+        <indicate-element margin="mr-12" labelwrapperstart="#" :label="`example-${index}`">
+            <section class="w-full rounded-xl p-8 text-center bg-secondary"
                  x-effect="() => {
                     if($el.innerHTML.trim() === '') $el.innerHTML = '<default-content></default-content>'
                 }">
-                <default-content></default-content>
+                <slot></slot>
             </section>
         </indicate-element>
     </div>
 
-    <template x-component="default-content">
+    <template x-component="default-content" c-data="{target:'',index:'',route:''}">
         <a class="btn btn-outline" :x-target="target || `#example-${index}`" x-route="route"> Click this <i class="pl-1"> x-route</i></a>
     </template>
     <template x-component="daisy-divider">

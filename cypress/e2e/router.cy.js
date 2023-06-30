@@ -118,14 +118,14 @@ describe('x-route & x-view', () => {
 
     it('renders view on route change', () => {
         cy.get('[data-test="test-view"]').should('not.exist')
-        cy.get('router-examples[index="1"]').shadow().find('a').click()
+        cy.get('router-examples[index="1"]').find('a').click()
         cy.location('pathname').should('eq', '/router/view')
         cy.get('[data-test="test-view"]').should('exist')
     })
 
     it('renders correct template for parameterised route', () => {
         cy.get('[data-test="test-view-params"]').should('not.exist')
-        cy.get('router-examples[index="2"]').shadow().find('a').click()
+        cy.get('router-examples[index="2"]').find('a').click()
         cy.get('[data-test="test-view-params"]').should('exist')
         cy.window().then((win) => {
             expect(win.Alpine.router.params).to.have.keys('name')
@@ -133,8 +133,8 @@ describe('x-route & x-view', () => {
     })
 
     it('leaves param value in path only', () => {
-        cy.get('router-examples[index="2"]').invoke('attr', 'route').should('eq', '/router/view/name:aaron')
-        cy.get('router-examples[index="2"]').shadow().find('a').click()
+        cy.get('#example-2').find('[route]').invoke('attr', 'route').should('eq', '/router/view/name:aaron')
+        cy.get('#example-2').find('a').click()
 
         cy.window().then((win) => {
             expect(win.location.pathname).to.eql('/router/view/aaron', 'window.location.pathname')
@@ -144,7 +144,7 @@ describe('x-route & x-view', () => {
 
     it('renders correct template for middle parameterised route', () => {
         cy.get('[data-test="test-view-params-middle"]').should('not.exist')
-        cy.get('router-examples[index="3"]').shadow().find('a').click()
+        cy.get('router-examples[index="3"]').find('a').click()
         cy.get('[data-test="test-view-params-middle"]').should('exist')
         cy.window().then((win) => {
             expect(win.Alpine.router.params).to.have.keys('product')
@@ -153,7 +153,7 @@ describe('x-route & x-view', () => {
 
     it('renders correct template for middle and end parameterised route', () => {
         cy.get('[data-test="test-view-params-middle-end"]').should('not.exist')
-        cy.get('router-examples[index="4"]').shadow().find('a').click()
+        cy.get('router-examples[index="4"]').find('a').click()
         cy.get('[data-test="test-view-params-middle-end"]').should('exist')
         cy.window().then((win) => {
             expect(win.Alpine.router.params).to.have.keys('product', 'category')
@@ -187,7 +187,7 @@ describe('x-view children', () => {
     it('can go "back" from a child route', () => {
         cy.visit(ROOT_PATH)
         cy.get('[data-test="home-router-button"]').click()
-        cy.get('router-examples[index="1"]').shadow().find('a').click()
+        cy.get('router-examples[index="1"]').find('a').click()
         cy.get('[data-test="test-view"]').should('exist')
         cy.go('back')
         cy.get('[data-test="test-view"]').should('not.exist')
@@ -227,7 +227,7 @@ describe('fetches html remotely if template is empty', () => {
 
     it('loads remote.html', () => {
         cy.get('[data-test="remote-template"]').should('not.exist')
-        cy.get('router-examples[index="5"]').shadow().find('a').click()
+        cy.get('router-examples[index="5"]').find('a').click()
         cy.get('[data-test="remote-template"]').should('exist')
     })
 })
