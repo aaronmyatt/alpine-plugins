@@ -317,23 +317,23 @@
             <slot></slot>
         </div>
     </template>
+    
+    <svg name="pencilsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5" hidden>
+        <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/>
+    </svg>
 
     <template x-component="atm-icon" c-data="{
   refOrSelector: '',
   icon(ref){
       if(!ref) return;
-      const icon = $refs[ref].cloneNode(true)
+      const iconEl = document.querySelector(`[name='${ref}']`);
+      const icon = iconEl.cloneNode(true)
       icon.removeAttribute('hidden')
       return icon.outerHTML;
   }
 }">
         <span x-html="icon(refOrSelector)"></span>
     </template>
-
-    <svg x-ref="pencilsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5"
-         hidden>
-        <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/>
-    </svg>
 
     <template x-component="copy-wrapper">
         <div class="rounded-xl p-5 bg-base-100/70">
