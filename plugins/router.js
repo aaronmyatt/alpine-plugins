@@ -1,15 +1,11 @@
 export default function (Alpine) {
-    Alpine.defaultTarget = Alpine.defaultTarget || 'main'
-    Alpine.baseUrl = Alpine.baseUrl || ''
-    let target = Alpine.defaultTarget
-    const Views = {}
-
-    Alpine.directive('view', (el, {expression}) => {
-        Views[expression] = el;
-        Views[expression].parts = expression.split('/').filter(part => part !== '');
-    })
-
-    const Router = Alpine.reactive({
+    const VIEWS = Alpine.views = {}
+    const ROUTER = Alpine.router = Alpine.reactive({
+        // preferences
+        defaultTarget: '',
+        baseUrl: '',
+        // state
+        target: '',
         routes: [],
         parts: [],
         lastRoute: {},
@@ -18,8 +14,10 @@ export default function (Alpine) {
         queryRaw: '',
         path: '',
         origin: '',
+        _rawPath: '', // <-- internal property, retains params so we can match views
 
         push(slug) {
+            slug = respectBaseUrl(slug)
             // separate path from query
             const [path, query] = dropTrailingSlash(slug).split('?')
             const paths = paramsFromRoute(dropTrailingSlash(path))
@@ -28,7 +26,7 @@ export default function (Alpine) {
             this._rawPath = normalisePath(paths.rawpath)
             const state = {
                 url: dropTrailingSlash(paths.pathname),
-                target,
+                target: this.target,
             };
             if (query) {
                 state.url += `?${query}`
@@ -44,72 +42,50 @@ export default function (Alpine) {
             this.path = window.location.pathname
             this.origin = window.location.origin
         },
-        _rawPath: '', // <-- internal property, retains params
     })
+    setRouterDefaults(Alpine, ROUTER)
+    registerDirectives(Alpine, ROUTER, VIEWS)
+    reactToPathChanges(Alpine, ROUTER, VIEWS)
+    appendCurrentView(Alpine, ROUTER, VIEWS)
+    listenToPopStateForBackNavigation(Alpine, ROUTER)
+    registerMagicProperties(Alpine, ROUTER, VIEWS)
+}
 
-    const routeChangeHandler = () => {
-        Alpine.nextTick(() => {
-            Router.push(pathname + window.location.search)
-            removeEventListener('routechange', routeChangeHandler, false);
-        });
-    }
-    window.addEventListener('routechange', routeChangeHandler)
-
-
-    window.addEventListener('popstate', (e) => {
-        e.preventDefault()
-        target = Alpine.defaultTarget
-        if(Router.lastRoute.target !== target) {
-            renderView(Router.lastRoute.target, '');
-        }
-        Router._rawPath = e.state.url;
+function setRouterDefaults(Alpine, ROUTER) {
+    ROUTER.defaultTarget = Alpine.defaultTarget = Alpine.defaultTarget || 'main'
+    ROUTER.baseUrl = Alpine.baseUrl = dropTrailingSlash(Alpine.baseUrl) || '/'
+    ROUTER.target = Alpine.defaultTarget
+    ROUTER.updateRouterValues();
+}
+function registerDirectives(Alpine, ROUTER, VIEWS) {
+    Alpine.directive('view', (el, {expression}) => {
+        VIEWS[expression] = el;
+        VIEWS[expression].parts = expression.split('/').filter(part => part !== '');
     })
-
-    Alpine.router = Router;
-    Alpine.views = Views;
-    // to avoid reactive changes to the array
-    function getView(path) {
-        return Views[path]
-    }
 
     Alpine.directive('route', (el, {expression}, {evaluateLater}) => {
-        Router.routes.push(el);
-
         const getRoute = expression.startsWith('/') ? (fn) => fn(expression) : evaluateLater(expression);
         el.addEventListener('click', (e) => {
             getRoute((route) => {
-                target = el.getAttribute('x-target') || Alpine.defaultTarget
+                ROUTER.target = el.getAttribute('x-target') || Alpine.defaultTarget
                 if (linkIsInternal(route)) {
                     e && e.preventDefault()
-                    Router.push(Alpine.baseUrl+route)
+                    ROUTER.push(Alpine.baseUrl+route)
                 }
             })
         })
     })
-
-    Alpine.magic('route', (el, {Alpine}) => expression => {
-        target = el.getAttribute('x-target') || Alpine.defaultTarget
-        if (linkIsInternal(expression)) {
-            Router.push(expression.pathname, query && getQueryParams(`?${query}`))
-        }
-    })
-
-    Alpine.magic('router', () => Router)
-
+}
+function reactToPathChanges(Alpine, ROUTER, VIEWS) {
     Alpine.effect(() => {
-        const templateEl = getView(Router._rawPath)
-
+        const templateEl = VIEWS[ROUTER._rawPath] // we react to this
         if(templateEl){
             if (templateEl.hasAttribute('x-target'))
-                target = templateEl.getAttribute('x-target')
-            renderLocalOrRemoteView(templateEl, target).then(() => {
-                const RouteChangeEvent = new Event('routechange')
-                Alpine.nextTick(() => dispatchEvent(RouteChangeEvent))
-            });
-        }
-        else{
-            const parts = Router._rawPath.split('/').filter(part => part !== '')
-            const likelyTheRightView = Views && Object.entries(Views).find((view) => {
+                ROUTER.target = templateEl.getAttribute('x-target')
+            renderLocalOrRemoteView(templateEl, ROUTER.target)
+        } else {
+            const parts = ROUTER._rawPath.split('/').filter(part => part !== '')
+            const likelyTheRightView = VIEWS && Object.entries(VIEWS).find((view) => {
                 return view[1].parts.length === parts.length
             })
             if(likelyTheRightView){
@@ -120,45 +96,46 @@ export default function (Alpine) {
                             return rawpath + part + '/'
                         return rawpath + part + ':' + parts[index] + '/'
                     }, '/')
-                Alpine.nextTick(() => Router.push(dropTrailingSlash(rawpath)+window.location.search))
+                Alpine.nextTick(() => ROUTER.push(dropTrailingSlash(rawpath)+window.location.search))
             }
         }
     })
-
-    // ensure all views have been parsed then trigger initial view
-    const pathname = dropTrailingSlash(window.location.pathname)
-    // 👆this may not match a template in the DOM, but it may match a child view in a remote template
-    // so we need to see if any of the parent templates in the current html file match a "part" of the
-    // pathname and load that view first - much like you would a layout in a traditional router
-
-    const mostLikelyBaseView = pathname
-        .replace(dropTrailingSlash(Alpine.baseUrl), '/')
-        .split('/')
-        .filter((key) => key !== '')
-        .map(part => {
-            const key = `/${part}`
-            return document.querySelector(`template[x-view="${key}"]`)
-        })
-        // filter out nulls
-        .filter(el => el)
-        // keep the longest match
-        .reduce((longest, current, index, arr) => {
-            if(index === 0) return current;
-            if (current && current.getAttribute('x-view').length > longest.getAttribute('x-view').length)
-                return current
-            return longest
-        }, null)
-
+}
+function appendCurrentView(Alpine, ROUTER, VIEWS) {
     document.addEventListener('alpine:initialized', () => {
-            if(mostLikelyBaseView && mostLikelyBaseView.getAttribute('x-view') === pathname){
-                Router.push(pathname+window.location.search);
-            } else if(mostLikelyBaseView) {
-                Router.push(mostLikelyBaseView.getAttribute('x-view')+window.location.search)
-            }else{
-                removeEventListener('routechange', routeChangeHandler, false);
-                Router.push(pathname+window.location.search)
-            }
-    });
+        // does ROUTER.path exactly match a view?
+        let view = VIEWS[ROUTER.path]
+        view || (view = Object.values(VIEWS).find(view => ROUTER.path.startsWith('/'+view.parts[0])))
+        if(view) {
+            renderLocalOrRemoteView(view, ROUTER.defaultTarget)
+                .then(() => {
+                    Alpine.nextTick(() => ROUTER.push(ROUTER.path + window.location.search))
+                })
+        } else {
+            console.error('No view found for path: ' + ROUTER.path)
+        }
+    })
+}
+
+function listenToPopStateForBackNavigation(Alpine, ROUTER) {
+    window.addEventListener('popstate', (e) => {
+        e.preventDefault()
+        ROUTER.target = Alpine.defaultTarget
+        if(ROUTER.lastRoute.target !== ROUTER.target) {
+            renderView(ROUTER.lastRoute.target, '');
+        }
+        ROUTER._rawPath = e.state.url;
+    })
+}
+function registerMagicProperties(Alpine, ROUTER, VIEWS){
+    Alpine.magic('route', (el, {Alpine}) => expression => {
+        ROUTER.target = el.getAttribute('x-target') || Alpine.defaultTarget
+        if (linkIsInternal(expression)) {
+            ROUTER.push(expression.pathname, query && getQueryParams(`?${query}`))
+        }
+    })
+    Alpine.magic('router', () => ROUTER)
+    Alpine.magic('view', () => expression => VIEWS[expression])
 }
 
 function renderLocalOrRemoteView(templateEl, target, initTree = true) {
@@ -167,7 +144,7 @@ function renderLocalOrRemoteView(templateEl, target, initTree = true) {
         // otherwise "child" templates that rely on a modifier will be skipped
         // const attrName = Array.from(templateEl.attributes).find(attr => attr.name.startsWith('x-view')).name;
         const path = templateEl.getAttribute('x-view');
-        return fetch(`${path}.html`)
+        return fetch(`${Alpine.baseUrl === '/' ? '' : Alpine.baseUrl}${path}.html`)
             .then((response) => response.text())
             .then((html) => {
                 templateEl.innerHTML = html
@@ -180,19 +157,12 @@ function renderLocalOrRemoteView(templateEl, target, initTree = true) {
     }
 }
 
+
 function renderView(target, html, initTree = true) {
     const notInTheShadowDom = document.querySelector(target)
     if (notInTheShadowDom) {
         notInTheShadowDom.innerHTML = html;
         initTree && Alpine.initTree(notInTheShadowDom);
-    } else {
-        window.components && window.components.map(component => {
-            const el = component.shadowRoot.querySelector(target)
-            if (el) {
-                component.shadowRoot.querySelector(target).innerHTML = html
-                initTree && Alpine.initTree(el);
-            }
-        })
     }
 }
 
@@ -259,4 +229,9 @@ function normalisePath(path) {
     if(Alpine.baseUrl === '/') return dropTrailingSlash(path);
     return dropTrailingSlash(path)
         .replace(dropTrailingSlash(Alpine.baseUrl),path===Alpine.baseUrl ? '/' : '');
+}
+
+function respectBaseUrl(path){
+    if(path.includes(Alpine.baseUrl)) return path
+    return dropTrailingSlash(Alpine.baseUrl + path)
 }
