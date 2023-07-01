@@ -1,6 +1,5 @@
 // Define a new Alpine.js plugin
 export default function registerWebComponents(Alpine) {
-    window.components = window.components || Alpine.reactive([]);
     const ALPINE_ATTRIBUTE_PREFIX = 'x-';
 
     Alpine.directive('component', (el, { expression }, { effect, evaluate }) => {
@@ -78,7 +77,6 @@ export default function registerWebComponents(Alpine) {
                         Alpine.nextTick(() => {
                             this.initialiseProps();
                         })
-                        window.components.push(this);
                     })
             }
 
