@@ -53,7 +53,7 @@ export default function (Alpine) {
 
 function setRouterDefaults(Alpine, ROUTER) {
     ROUTER.defaultTarget = Alpine.defaultTarget = Alpine.defaultTarget || 'main'
-    ROUTER.baseUrl = Alpine.baseUrl = dropTrailingSlash(Alpine.baseUrl) || '/'
+    ROUTER.baseUrl = Alpine.baseUrl = (dropTrailingSlash(Alpine.baseUrl) || '/')
     ROUTER.target = Alpine.defaultTarget
     ROUTER.updateRouterValues();
 }
@@ -70,7 +70,7 @@ function registerDirectives(Alpine, ROUTER, VIEWS) {
                 ROUTER.target = el.getAttribute('x-target') || Alpine.defaultTarget
                 if (linkIsInternal(route)) {
                     e && e.preventDefault()
-                    ROUTER.push(Alpine.baseUrl+route)
+                    ROUTER.push(normalisePath(route))
                 }
             })
         })
