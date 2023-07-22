@@ -156,7 +156,10 @@ export default function registerWebComponents(Alpine) {
         }
 
         if (hasNonSlotChildren) {
-            fetch(`${CustomElement.componentName}.html`)
+            // Register the WebComponent with the custom element name
+            customElements.define(CustomElement.componentName, CustomElement)
+        } else {
+            fetch(`/${CustomElement.componentName}.html`)
                 .then((response) => response.text())
                 .then((html) => {
                     el.innerHTML = `${html}${el.innerHTML}`;
@@ -164,9 +167,6 @@ export default function registerWebComponents(Alpine) {
                 .then(() => {
                     customElements.define(CustomElement.componentName, CustomElement)
                 })
-        } else {
-            // Register the WebComponent with the custom element name
-            customElements.define(CustomElement.componentName, CustomElement)
         }
 
     });
