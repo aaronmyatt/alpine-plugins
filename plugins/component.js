@@ -93,29 +93,7 @@ export default function registerWebComponents(Alpine) {
             }
 
             async cloneOrFetchTemplate() {
-                // check if template has non Slot element children
-                let hasNonSlotChildren = false;
-                for (let i = 0; i < el.content.children.length; i++) {
-                    if (el.content.children[i].tagName !== "SLOT") {
-                        hasNonSlotChildren = true;
-                        break;
-                    }
-                }
-
-                // if template has non Slot element children, clone it
-                // otherwise fetch it from the public folder
-                if (hasNonSlotChildren) {
-                    return el.content.cloneNode(true);
-                } else {
-                    return fetch(`${CustomElement.componentName}.html`)
-                        .then((response) => response.text())
-                        .then((html) => {
-                            el.innerHTML = `${html}${el.innerHTML}`;
-                        })
-                        .then(() => {
-                            return el.content.cloneNode(true);
-                        });
-                }
+                return el.content.cloneNode(true);
             }
 
             shareStylesWithDocument() {
@@ -169,7 +147,27 @@ export default function registerWebComponents(Alpine) {
             }
         }
 
-        // Register the WebComponent with the custom element name
-        customElements.define(CustomElement.componentName, CustomElement);
+        let hasNonSlotChildren = false;
+        for (let i = 0; i < el.content.children.length; i++) {
+            if (el.content.children[i].tagName !== "SLOT") {
+                hasNonSlotChildren = true;
+                break;
+            }
+        }
+
+        if (hasNonSlotChildren) {
+            fetch(`${CustomElement.componentName}.html`)
+                .then((response) => response.text())
+                .then((html) => {
+                    el.innerHTML = `${html}${el.innerHTML}`;
+                })
+                .then(() => {
+                    customElements.define(CustomElement.componentName, CustomElement)
+                })
+        } else {
+            // Register the WebComponent with the custom element name
+            customElements.define(CustomElement.componentName, CustomElement)
+        }
+
     });
 }
